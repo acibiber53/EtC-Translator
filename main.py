@@ -19,8 +19,8 @@ def htm_to_urllist():
     return urllist
 
 def translate_news(urllist):
-
     trs = Translator()
+
     try:
         for link in urllist:
             trs.translate(link)
