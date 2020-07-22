@@ -6,6 +6,7 @@ from docx import Document
 import os
 
 
+# noinspection SpellCheckingInspection
 class Translator:
     def __init__(self):
         self.driver = self.open_browser()
@@ -82,6 +83,7 @@ class Translator:
                   'hurriyetdailynews': "//div[@class='content']/p[1]",
                   'dailysabah': "//div[@class='article_body']/p"}
 
+        # TODO Hurriyet requires to click to continue the story, gotta add special case for that
         for news_outlet in websites:
             if re.search(news_outlet, self.link):
                 header = self.driver.find_element_by_xpath(headers[news_outlet]).text
@@ -91,6 +93,9 @@ class Translator:
 
     def translate_write(self, header, body):
         outputfile = Document()
+
+        # We remove special characters so they won't make any problem with the filnames later
+        header = re.sub(r'[\\/:"*?<>|]+','-',header)
 
         fulltext = header + '\n' + body
 
