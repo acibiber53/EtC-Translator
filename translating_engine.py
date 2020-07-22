@@ -94,7 +94,7 @@ class Translator:
     def translate_write(self, header, body):
         outputfile = Document()
 
-        # We remove special characters so they won't make any problem with the filnames later
+        # We change special characters with dashes so they won't make any problem with the filenames later
         header = re.sub(r'[\\/:"*?<>|]+','-',header)
 
         fulltext = header + '\n' + body
