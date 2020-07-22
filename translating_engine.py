@@ -5,21 +5,22 @@ import re
 from docx import Document
 import os
 
-class Translator:
-    def open_output_file(self):
-        self.outputfile = Document()
-        self.outputfile_name = str(date.today()) + '.docx'
-        if os.path.exists(self.outputfile_name):
-            os.remove(self.outputfile_name)
-        self.outputfile.save(self.outputfile_name)
 
+class Translator:
     def __init__(self):
         self.driver = self.open_browser()
         self.translator = self.open_browser()
         self.translator.get('https://fanyi.sogou.com/')
-        self.open_output_file()
+        self.link = ''
+        self.output_prefix = self.prepare_prefix()
+        self.output_suffix = '.docx'
 
-    def open_browser(self):
+    @staticmethod
+    def prepare_prefix():
+        return re.sub('-', '.', str(date.today())) + ' - '
+
+    @staticmethod
+    def open_browser():
         """
         # options for headless Chrome instance that passes automation detection
         options = webdriver.ChromeOptions()
@@ -49,7 +50,7 @@ class Translator:
         options.add_argument("start-maximized")
 
         driver = webdriver.Chrome(options=options)
-        sleep(3)
+        sleep(1)
 
         return driver
 
@@ -59,15 +60,28 @@ class Translator:
 
     def parse_link(self):
         websites = ['reuters', 'apnews', 'aljazeera', 'ahvalnews', 'turkishminute',
-                    'duvarenglish', 'aa', 'hurriyetdailynews', 'dailysabah']
+                    'duvarenglish', 'aa.com.tr', 'hurriyetdailynews', 'dailysabah']
 
-        # TODO We need to add other news agencies for the headers and the bodies
-        # TODO Maybe using beautiful soup will easily solve this XPath mess, gotta check that, because these two uses h1 for headers, and p for bodies
-        headers = {'reuters':'//*[@id="USKCN24J0M1"]/div[1]/div[1]/div/div/div[1]/div/h1','ahvalnews': '//*[@id="mm-0"]/div[2]/div[3]/div/section/div/div/div[3]/div[1]/h1',
-                   'turkishminute': '//article/div[1]/header/h1'}
+        headers = {'reuters': "//div[@class='ArticleHeader_content-container']/h1",
+                   'apnews': "//div[@class='CardHeadline']/div[1]/h1",
+                   'aljazeera': "//div[@class='article-heading']/h1",
+                   'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
+                   'turkishminute': "//article/div[1]/header/h1",
+                   'duvarenglish': "//div[@class='posttitle']",
+                   'aa.com.tr': "//div[@class='detay-spot-category']/h1",
+                   'hurriyetdailynews': "//div[@class='content']/h1",
+                   'dailysabah': "//h1[@class='main_page_title']"}
 
-        bodies = {'ahvalnews': '//*[@id="mm-0"]/div[2]/div[3]/div/section/div/div/div[3]/div[3]/div[1]/div/div/p',
-                  'turkishminute': '//article/div[3]/p'}
+        bodies = {'reuters': "//div[@class='StandardArticleBody_body']/p",
+                  'apnews': "//div[@class='Article']/p",
+                  'aljazeera': "//p[@class='p1']",
+                  'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
+                  'turkishminute': "//article/div[3]/p",
+                  'duvarenglish': "//div[@class='postcontent']/*[self::p or self::h3]",
+                  'aa.com.tr': "//div[@class='detay-icerik']/div[1]/p",
+                  'hurriyetdailynews': "//div[@class='content']/p[1]",
+                  'dailysabah': "//div[@class='article_body']/p"}
+
         for news_outlet in websites:
             if re.search(news_outlet, self.link):
                 header = self.driver.find_element_by_xpath(headers[news_outlet]).text
@@ -75,10 +89,8 @@ class Translator:
                 body = '\n'.join([item.text for item in body])
                 self.translate_write(header, body)
 
-        self.outputfile.save(self.outputfile_name)
-
     def translate_write(self, header, body):
-        self.outputfile.add_heading(header)
+        outputfile = Document()
 
         fulltext = header + '\n' + body
 
@@ -90,21 +102,30 @@ class Translator:
         # Finding the output element
         stoutput = self.translator.find_element_by_class_name("output")
 
-        # Sending the text paragraph by paragraph
-        parcre = stoutput.text.split('\n')
+        # Splitting output into smaller pieces
+        all_translation = stoutput.text.split('\n')
+        ch_heading = all_translation[0]
+        ch_body = all_translation[1:]
 
-        for string in parcre:
-            self.outputfile.add_paragraph(string)
+        # Adding content to document
+        outputfile.add_heading(ch_heading)
+        for string in ch_body:
+            outputfile.add_paragraph(string)
 
         # Cleaning the text area for next translation
         stinput.clear()
 
-        self.outputfile.add_paragraph(self.driver.current_url + '\n')
+        outputfile.add_paragraph(self.driver.current_url + '\n')
+
+        # Making file name
+        outputfilename = self.output_prefix + ch_heading + self.output_suffix
+
+        if os.path.exists(outputfilename):
+            os.remove(outputfilename)
+        outputfile.save(outputfilename)
 
     def translate(self, link):
         self.link = link
         self.driver.get(self.link)
         sleep(3)
         self.parse_link()
-
-# trs = Translator()
