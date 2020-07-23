@@ -28,7 +28,7 @@ def translate_news(urllist):
     try:
         for link in urllist:
             start_time = time.time()
-            print(f"Translation begins for {link}, time is {start_time}")
+            print(f"Translation begins for {link}")
             trs.translate(link)
             print(f"Translation ends, it took {time.time() - start_time} seconds")
     finally:
