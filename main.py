@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from translating_engine import Translator
 import requests
+import time
 
 
 def htm_to_urllist():
@@ -26,7 +27,10 @@ def translate_news(urllist):
 
     try:
         for link in urllist:
+            start_time = time.time()
+            print(f"Translation begins for {link}, time is {start_time}")
             trs.translate(link)
+            print(f"Translation ends, it took {time.time() - start_time} seconds")
     finally:
         trs.close_driver()
 

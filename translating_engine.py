@@ -1,20 +1,26 @@
 from selenium import webdriver
-from time import sleep
+from selenium.webdriver.common.keys import Keys
+from time import sleep, time
 from datetime import date
 import re
 from docx import Document
 import os
+import subprocess
 
 
 # noinspection SpellCheckingInspection
 class Translator:
     def __init__(self):
+
         self.driver = self.open_browser()
         self.translator = self.open_browser()
         self.translator.get('https://fanyi.sogou.com/')
+        sleep(2)
         self.link = ''
         self.output_prefix = self.prepare_prefix()
         self.output_suffix = '.docx'
+        self.stoutput = self.translator.find_element_by_class_name("output")
+        self.stinput = self.translator.find_element_by_id("trans-input")
 
     @staticmethod
     def prepare_prefix():
@@ -100,15 +106,14 @@ class Translator:
         fulltext = header + '\n' + body
 
         # Finding the input element and sending the text in
-        stinput = self.translator.find_element_by_id("trans-input")
-        stinput.send_keys(fulltext)
-        sleep(3)
-
-        # Finding the output element
-        stoutput = self.translator.find_element_by_class_name("output")
+        subprocess.run(['clip.exe'], input=fulltext.strip().encode('utf-16'), check=True)
+        self.stinput.click()
+        self.stinput.send_keys(Keys.CONTROL, 'v')
+        # self.stinput.send_keys(fulltext)
+        sleep(2)
 
         # Splitting output into smaller pieces
-        all_translation = stoutput.text.split('\n')
+        all_translation = self.stoutput.text.split('\n')
         ch_heading = all_translation[0]
         ch_body = all_translation[1:]
 
@@ -118,7 +123,7 @@ class Translator:
             outputfile.add_paragraph(string)
 
         # Cleaning the text area for next translation
-        stinput.clear()
+        self.stinput.clear()
 
         outputfile.add_paragraph(self.driver.current_url + '\n')
 
