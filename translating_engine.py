@@ -79,7 +79,7 @@ class Translator:
                    'hurriyetdailynews': "//div[@class='content']/h1",
                    'dailysabah': "//h1[@class='main_page_title']"}
 
-        bodies = {'reuters': "//div[@class='StandardArticleBody_body']/p",
+        bodies = {'reuters': "//div[@class='StandardArticleBody_body']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
                   'aljazeera': "//p[@class='p1']",
                   'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
@@ -89,7 +89,7 @@ class Translator:
                   'hurriyetdailynews': "//div[@class='content']/p[1]",
                   'dailysabah': "//div[@class='article_body']/p"}
 
-        # TODO Hurriyet requires to click to continue the story, gotta add special case for that
+        # TODO Hurriyet sometimes requires to click to continue the story, gotta add special case for that
         for news_outlet in websites:
             if re.search(news_outlet, self.link):
                 header = self.driver.find_element_by_xpath(headers[news_outlet]).text
@@ -98,16 +98,16 @@ class Translator:
                 self.translate_write(header, body)
 
     def translate_write(self, header, body):
-        outputfile = Document()
-
         # We change special characters with dashes so they won't make any problem with the filenames later
-        header = re.sub(r'[\\/:"*?<>|]+','-',header)
+        header = re.sub(r'[\\/:"*?<>|]+', '-', header)
 
         fulltext = header + '\n' + body
-
+        if len(fulltext) >= 5000:
+            print("News is too long, can't translate")
+            return
         # Finding the input element and sending the text in
         subprocess.run(['clip.exe'], input=fulltext.strip().encode('utf-16'), check=True)
-        self.stinput.click()
+        #self.stinput.click()
         self.stinput.send_keys(Keys.CONTROL, 'v')
         # self.stinput.send_keys(fulltext)
         sleep(2)
@@ -117,22 +117,37 @@ class Translator:
         ch_heading = all_translation[0]
         ch_body = all_translation[1:]
 
+        self.output_news(ch_heading, ch_body)
+
+        # Cleaning the text area for next translation
+        self.stinput.clear()
+
+    def output_news(self, ch_heading, ch_body):
+        outputfile = Document()
+
         # Adding content to document
         outputfile.add_heading(ch_heading)
         for string in ch_body:
             outputfile.add_paragraph(string)
-
-        # Cleaning the text area for next translation
-        self.stinput.clear()
 
         outputfile.add_paragraph(self.driver.current_url + '\n')
 
         # Making file name
         outputfilename = self.output_prefix + ch_heading + self.output_suffix
 
-        if os.path.exists(outputfilename):
-            os.remove(outputfilename)
-        outputfile.save(outputfilename)
+        # Creating a new folder with the name of the date
+        cur_dir = os.getcwd()  # get current directory
+        path = cur_dir + r'\\' + self.output_prefix[:-3] + r'\\'  # Add new folder
+
+        # Check if the named folder exists, if not make one
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+        filepath = path + outputfilename
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        outputfile.save(filepath)
 
     def translate(self, link):
         self.link = link
