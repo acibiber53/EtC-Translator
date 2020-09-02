@@ -15,10 +15,10 @@ Websites currently covered are:
 More websites could be added according to need.
 
 To make this script work, a preparation of newslinks is needed. news-to-translate.htm file is hand-made (for now). Steps to create this file are:
-1- Open all the news in seperate tabs on Chrome. Don't have any other tab open
-2- Hit Ctrl + Shift + D to bookmark all the tabs.
-3- Hit Ctrl + Shift + O to open bookmark manager.
-4- From upper rigth Settings, export bookmarks and save it to anywhere you like.
-5- Open the bookmarks html file and find the news. Copy all the links.
-6- Open a word document and paste the links. Save it as htm file named 'news-to-translate.htm' to the same folder of this script.
-7- Run the script
+1. Open all the news in seperate tabs on Chrome. Don't have any other tab open
+2. Hit Ctrl + Shift + D to bookmark all the tabs.
+3. Hit Ctrl + Shift + O to open bookmark manager.
+4. From upper rigth Settings, export bookmarks and save it to anywhere you like.
+5. Open the bookmarks html file and find the news. Copy all the links.
+6. Open a word document and paste the links. Save it as htm file named 'news-to-translate.htm' to the same folder of this script.
+7. Run the script
