@@ -86,10 +86,9 @@ class Translator:
                   'turkishminute': "//article/div[3]/p",
                   'duvarenglish': "//div[@class='postcontent']/*[self::p or self::h3]",
                   'aa.com.tr': "//div[@class='detay-icerik']/div[1]/p",
-                  'hurriyetdailynews': "//div[@class='content']/p[1]",
+                  'hurriyetdailynews': "//div[@class='content']/p",
                   'dailysabah': "//div[@class='article_body']/p"}
 
-        # TODO Hurriyet sometimes requires to click to continue the story, gotta add special case for that
         for news_outlet in websites:
             if re.search(news_outlet, self.link):
                 header = self.driver.find_element_by_xpath(headers[news_outlet]).text
@@ -107,7 +106,7 @@ class Translator:
             return
         # Finding the input element and sending the text in
         subprocess.run(['clip.exe'], input=fulltext.strip().encode('utf-16'), check=True)
-        #self.stinput.click()
+        # self.stinput.click()
         self.stinput.send_keys(Keys.CONTROL, 'v')
         # self.stinput.send_keys(fulltext)
         sleep(2)

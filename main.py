@@ -1,3 +1,17 @@
+"""
+How to create exe file from this script
+On terminal write this.
+pyinstaller -n EtC-translator --onefile --distpath EtC-translator-for-all-v2
+pyinstaller should be installed beforehand. It is the main executable maker.
+-n is for name
+--onefile reduces everything into one exe file
+--distpath creates the file into desired directory
+
+After making the exe file, two other file should be put into same directory:
+1- news-to-translate.htm. This should be made daily.
+2- chromedriver.exe. This is Chrome driver for selenium. Should be updated as new version come out.
+
+"""
 from bs4 import BeautifulSoup
 from translating_engine import Translator
 import requests
@@ -33,18 +47,6 @@ def translate_news(urllist):
             print(f"Translation ends, it took {time.time() - start_time} seconds")
     finally:
         trs.close_driver()
-
-
-def with_bs4(urllist):
-    for url in urllist:
-        r1 = requests.get(url)
-        coverpage = r1.content
-        soup1 = BeautifulSoup(coverpage, 'lxml')
-        header = soup1.find_all('h1')
-        body = soup1.find_all('p')
-        all_body = '\n'.join(paragraph.get_text() for paragraph in body)
-        print(header[0].get_text())
-        print(all_body)
 
 
 if __name__ == '__main__':
