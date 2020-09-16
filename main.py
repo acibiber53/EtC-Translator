@@ -1,11 +1,13 @@
 """
 How to create exe file from this script
 On terminal write this.
-pyinstaller -n EtC-translator --onefile --distpath EtC-translator-for-all-v2
+pyinstaller main.py -n EtC-translator --onefile --distpath EtC-translator-for-all-vX
 pyinstaller should be installed beforehand. It is the main executable maker.
+main.py is the entrance point for the project.
 -n is for name
 --onefile reduces everything into one exe file
 --distpath creates the file into desired directory
+X in vX shows the version.
 
 After making the exe file, two other file should be put into same directory:
 1- news-to-translate.htm. This should be made daily.
@@ -26,13 +28,16 @@ def htm_to_urllist():
     1 - Put all your websites you want to translate into one bookmark folder. Ctrl + Shift + D for short.
     2 - Open the file, find your folder, copy the content.
     3 - Open MS Word, paste the content, save the folder as .htm/ .html"""
-
-    with open("news-to-translate.htm") as file:
-        soup = BeautifulSoup(file, "lxml")
-
+    doc_name = "news-to-translate.htm"
+    try:
+        with open(doc_name) as file:
+            soup = BeautifulSoup(file, "lxml")
+    except FileNotFoundError:
+        print(f"We couldn't find your document, please make sure to have a document named {doc_name}")
     urllist = list()
     for link in soup.find_all('a'):
         urllist.append(link.get('href'))
+    print(urllist)
     return urllist
 
 
