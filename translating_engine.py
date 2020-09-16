@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+import selenium.common.exceptions as sce
 from time import sleep, time
 from datetime import date
 import re
@@ -36,6 +37,7 @@ class Translator:
         options.add_argument('--disable-gpu')
         options.add_argument('--no-sandbox')
         options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--ignore-ssl-errors')
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
 
@@ -54,6 +56,8 @@ class Translator:
         driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": {"User-Agent": "browser1"}})
         """
         options = webdriver.ChromeOptions()
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--ignore-ssl-errors')
         options.add_argument("start-maximized")
 
         driver = webdriver.Chrome(options=options)
@@ -69,7 +73,7 @@ class Translator:
         websites = ['reuters', 'apnews', 'aljazeera', 'ahvalnews', 'turkishminute',
                     'duvarenglish', 'aa.com.tr', 'hurriyetdailynews', 'dailysabah']
 
-        headers = {'reuters': "//div[@class='ArticleHeader_content-container']/h1",
+        headers = {'reuters': "//div[starts-with(@class, 'ArticlePage-article-header')]/h1",
                    'apnews': "//div[@class='CardHeadline']/div[1]/h1",
                    'aljazeera': "//div[@class='article-heading']/h1",
                    'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
@@ -79,7 +83,7 @@ class Translator:
                    'hurriyetdailynews': "//div[@class='content']/h1",
                    'dailysabah': "//h1[@class='main_page_title']"}
 
-        bodies = {'reuters': "//div[@class='StandardArticleBody_body']/*[self::p or self::h3]",
+        bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
                   'aljazeera': "//p[@class='p1']",
                   'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
@@ -91,8 +95,13 @@ class Translator:
 
         for news_outlet in websites:
             if re.search(news_outlet, self.link):
-                header = self.driver.find_element_by_xpath(headers[news_outlet]).text
-                body = self.driver.find_elements_by_xpath(bodies[news_outlet])
+                try:
+                    header = self.driver.find_element_by_xpath(headers[news_outlet]).text
+                    body = self.driver.find_elements_by_xpath(bodies[news_outlet])
+                except sce.NoSuchElementException as error:
+                    print("Couldn't find the content you are looking for, error message is like this:\n")
+                    print(error)
+                    continue
                 body = '\n'.join([item.text for item in body])
                 self.translate_write(header, body)
 
