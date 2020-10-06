@@ -25,10 +25,24 @@ class Translator:
 
     @staticmethod
     def prepare_prefix():
+        """
+            This method prepares the date prefix for the document names. It is in the format of "XXXX.XX.XX - ". After
+            this comes the header of the news.
+        :return:
+        """
         return re.sub('-', '.', str(date.today())) + ' - '
 
     @staticmethod
     def open_browser():
+        """
+            This method opens a webdriver in a preset options environment. Now it only opens the driver maximized and
+            ignores the ssl errors.
+
+            Some other possible arguments also left in the comments for future reference. It is possible to use it in
+            headless mode with the arguments in the comment.
+
+        :return:  webdriver
+        """
         """
         # options for headless Chrome instance that passes automation detection
         options = webdriver.ChromeOptions()
@@ -66,6 +80,9 @@ class Translator:
         return driver
 
     def close_driver(self):
+        """
+            This method closes all the drivers that are opened by the class.
+        """
         self.driver.quit()
         self.translator.quit()
 
@@ -75,7 +92,7 @@ class Translator:
 
         headers = {'reuters': "//div[starts-with(@class, 'ArticlePage-article-header')]/h1",
                    'apnews': "//div[@class='CardHeadline']/div[1]/h1",
-                   'aljazeera': "//div[@class='article-heading']/h1",
+                   'aljazeera': "//header[@class='article-header']/h1",
                    'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
                    'turkishminute': "//article/div[1]/header/h1",
                    'duvarenglish': "//div[@class='posttitle']",
@@ -85,7 +102,7 @@ class Translator:
 
         bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
-                  'aljazeera': "//p[@class='p1']",
+                  'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/p",
                   'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
                   'turkishminute': "//article/div[3]/p",
                   'duvarenglish': "//div[@class='postcontent']/*[self::p or self::h3]",
@@ -106,6 +123,17 @@ class Translator:
                 self.translate_write(header, body)
 
     def translate_write(self, header, body):
+        """
+            Main translation method. It receives the header and body of a news, concatanates them, copies it to the
+            clipboard, then pastes it to the main translation webelement.
+
+            Translation engine automatically translates it, then it collects the results from the output webelement.
+
+            At the end it clears the input area for the next news.
+        :param header: String. One line. Header of the news
+        :param body: String. Long. For some websites, contains many empty lines.
+        :return:
+        """
         # We change special characters with dashes so they won't make any problem with the filenames later
         header = re.sub(r'[\\/:"*?<>|]+', '-', header)
 
