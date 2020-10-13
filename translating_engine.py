@@ -106,7 +106,7 @@ class Translator:
 
         bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
-                  'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/p",
+                  'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
                   'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
                   'turkishminute': "//article/div[3]/p",
                   'duvarenglish': "//div[@class='postcontent']/*[self::p or self::h3]",
@@ -143,9 +143,12 @@ class Translator:
         header = re.sub(r'[\\/:"*?<>|]+', '-', header)
 
         fulltext = header + '\n' + body
+        islong = False
         if len(fulltext) >= 5000:
-            print("News is too long, can't translate")
-            return
+            print("News is too long, only translating the title")
+            fulltext = header
+            islong = True
+
         # Finding the input element and sending the text in
         subprocess.run(['clip.exe'], input=fulltext.strip().encode('utf-16'), check=True)
         # self.stinput.click()
@@ -156,7 +159,10 @@ class Translator:
         # Splitting output into smaller pieces
         all_translation = self.stoutput.text.split('\n')
         ch_heading = all_translation[0]
-        ch_body = all_translation[1:]
+        if not islong:
+            ch_body = all_translation[1:]
+        else:
+            ch_body = ""
 
         self.output_news(ch_heading, ch_body)
 
