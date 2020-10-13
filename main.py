@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 from translating_engine import Translator
 import requests
 import time
+import os
 
 
 def htm_to_urllist():
@@ -34,6 +35,7 @@ def htm_to_urllist():
             soup = BeautifulSoup(file, "lxml")
     except FileNotFoundError:
         print(f"We couldn't find your document, please make sure to have a document named {doc_name}")
+        os.system("pause")
     urllist = list()
     for link in soup.find_all('a'):
         urllist.append(link.get('href'))
@@ -52,6 +54,7 @@ def translate_news(urllist):
             print(f"Translation ends, it took {time.time() - start_time} seconds")
     finally:
         trs.close_driver()
+        os.system("pause")
 
 
 if __name__ == '__main__':

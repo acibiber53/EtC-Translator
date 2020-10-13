@@ -7,9 +7,9 @@ import re
 from docx import Document
 import os
 import subprocess
+from webdriver_manager.chrome import ChromeDriverManager
 
 
-# noinspection SpellCheckingInspection
 class Translator:
     def __init__(self):
 
@@ -74,7 +74,11 @@ class Translator:
         options.add_argument('--ignore-ssl-errors')
         options.add_argument("start-maximized")
 
-        driver = webdriver.Chrome(options=options)
+        try:
+            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        except sce.SessionNotCreatedException as error:
+            print(error)
+            os.system("pause")
         sleep(1)
 
         return driver
@@ -118,6 +122,7 @@ class Translator:
                 except sce.NoSuchElementException as error:
                     print("Couldn't find the content you are looking for, error message is like this:\n")
                     print(error)
+                    os.system("pause")
                     continue
                 body = '\n'.join([item.text for item in body])
                 self.translate_write(header, body)
