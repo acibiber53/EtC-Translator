@@ -91,41 +91,58 @@ class Translator:
         self.translator.quit()
 
     def parse_link(self):
-        websites = ['reuters', 'apnews', 'aljazeera', 'ahvalnews', 'turkishminute',
-                    'duvarenglish', 'aa.com.tr', 'hurriyetdailynews', 'dailysabah']
+        parse_tmp = self.link.split('/')[2].split('.')
+        if parse_tmp[0] == 'www':
+            news_outlet = parse_tmp[1]
+        else:
+            news_outlet = parse_tmp[0]
 
         headers = {'reuters': "//div[starts-with(@class, 'ArticlePage-article-header')]/h1",
                    'apnews': "//div[@class='CardHeadline']/div[1]/h1",
                    'aljazeera': "//header[@class='article-header']/h1",
                    'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
                    'turkishminute': "//article/div[1]/header/h1",
-                   'duvarenglish': "//div[@class='posttitle']",
-                   'aa.com.tr': "//div[@class='detay-spot-category']/h1",
+                   'duvarenglish': "//div[@class='col-12']/header/h1",
+                   'aa': "//div[@class='detay-spot-category']/h1",
                    'hurriyetdailynews': "//div[@class='content']/h1",
-                   'dailysabah': "//h1[@class='main_page_title']"}
+                   'dailysabah': "//h1[@class='main_page_title']",
+                   'trtwold': "//div[@class='noMedia.article-header-info']/h1",
+                   'nordicmonitor': "//div[@class='entry-header-details']/h1"}
 
         bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
                   'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
                   'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
                   'turkishminute': "//article/div[3]/p",
-                  'duvarenglish': "//div[@class='postcontent']/*[self::p or self::h3]",
-                  'aa.com.tr': "//div[@class='detay-icerik']/div[1]/p",
+                  'duvarenglish': "//div[@class='content-text']/*[self::p or self::h3]",
+                  'aa': "//div[@class='detay-icerik']/div[1]/p",
                   'hurriyetdailynews': "//div[@class='content']/p",
-                  'dailysabah': "//div[@class='article_body']/p"}
+                  'dailysabah': "//div[@class='article_body']/p",
+                  'trtworld': "//div[@class='contentBox bg-w noMedia']/p",
+                  'nordicmonitor': "//div[@class='entry-content']/p"}
 
-        for news_outlet in websites:
-            if re.search(news_outlet, self.link):
-                try:
-                    header = self.driver.find_element_by_xpath(headers[news_outlet]).text
-                    body = self.driver.find_elements_by_xpath(bodies[news_outlet])
-                except sce.NoSuchElementException as error:
-                    print("Couldn't find the content you are looking for, error message is like this:\n")
-                    print(error)
-                    os.system("pause")
-                    continue
-                body = '\n'.join([item.text for item in body])
-                self.translate_write(header, body)
+        is_not_found = 0
+        try:
+            header = self.driver.find_element_by_xpath(headers.get(news_outlet, "//h1")).text
+        except sce.NoSuchElementException as error:
+            print(f"We got an error message when searching for header:\n{error}\nTo be able to continue our "
+                  f"work, we are selecting the header from the most common xpath, //h1.")
+            header = self.driver.find_element_by_xpath("//h1")
+            is_not_found = 1
+
+        try:
+            body = self.driver.find_elements_by_xpath(bodies.get(news_outlet, "//p"))
+        except sce.NoSuchElementException as error:
+            print(f"We got an error message when searching for body:\n{error}\nTo be able to continue our "
+                  f"work, we are selecting the body from the most common xpath, //p.")
+            body = self.driver.find_element_by_xpath("//p")
+            is_not_found = 1
+
+        if is_not_found:
+            os.system("pause")
+
+        body = '\n'.join([item.text for item in body])
+        self.translate_write(header, body)
 
     def translate_write(self, header, body):
         """
@@ -143,11 +160,9 @@ class Translator:
         header = re.sub(r'[\\/:"*?<>|]+', '-', header)
 
         fulltext = header + '\n' + body
-        islong = False
         if len(fulltext) >= 5000:
-            print("News is too long, only translating the title")
-            fulltext = header
-            islong = True
+            print("News is too long, only translating first 5000 characters")
+            fulltext = fulltext[:5000]
 
         # Finding the input element and sending the text in
         subprocess.run(['clip.exe'], input=fulltext.strip().encode('utf-16'), check=True)
@@ -159,10 +174,7 @@ class Translator:
         # Splitting output into smaller pieces
         all_translation = self.stoutput.text.split('\n')
         ch_heading = all_translation[0]
-        if not islong:
-            ch_body = all_translation[1:]
-        else:
-            ch_body = ""
+        ch_body = all_translation[1:]
 
         self.output_news(ch_heading, ch_body)
 
