@@ -1,7 +1,7 @@
 """
 How to create exe file from this script
 On terminal write this.
-pyinstaller main.py -n EtC-translator --onefile --distpath EtC-translator-for-all-vX
+pyinstaller main.py -n EtC-translator-vX --onefile --distpath EtC-translator-for-all-vX
 pyinstaller should be installed beforehand. It is the main executable maker.
 main.py is the entrance point for the project.
 -n is for name
@@ -16,7 +16,7 @@ After making the exe file, two other file should be put into same directory:
 """
 from bs4 import BeautifulSoup
 from translating_engine import Translator
-import requests
+from gdapi_controller import GoogleDriveAPIController as GDAPIC
 import time
 import os
 
@@ -43,6 +43,13 @@ def htm_to_urllist():
     return urllist
 
 
+def upload_to_drive(trs_engine):
+    print("\nUploading to Google Drive has been started!\n")
+    gdapi = GDAPIC()
+    gdapi.upload_all_in_folder(folder_name=trs_engine.output_directory)
+    print("\nUploading to Google Drive has been finished!\n")
+
+
 def translate_news(urllist):
     trs = Translator()
 
@@ -54,6 +61,7 @@ def translate_news(urllist):
             print(f"Translation ends, it took {time.time() - start_time} seconds")
     finally:
         trs.close_driver()
+        upload_to_drive(trs)
         os.system("pause")
 
 

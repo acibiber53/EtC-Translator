@@ -19,7 +19,7 @@ class Translator:
         sleep(2)
         self.link = ''
         self.output_prefix = self.prepare_prefix()
-        self.output_suffix = '.docx'
+        self.output_directory = self.output_prefix[:-3] + '\\'
         self.stoutput = self.translator.find_element_by_class_name("output")
         self.stinput = self.translator.find_element_by_id("trans-input")
 
@@ -192,17 +192,13 @@ class Translator:
         outputfile.add_paragraph(self.driver.current_url + '\n')
 
         # Making file name
-        outputfilename = self.output_prefix + ch_heading + self.output_suffix
-
-        # Creating a new folder with the name of the date
-        cur_dir = os.getcwd()  # get current directory
-        path = cur_dir + r'\\' + self.output_prefix[:-3] + r'\\'  # Add new folder
+        outputfilename = self.output_prefix + ch_heading + '.docx'
 
         # Check if the named folder exists, if not make one
-        if not os.path.exists(path):
-            os.mkdir(path)
+        if not os.path.exists(self.output_directory):
+            os.mkdir(self.output_directory)
 
-        filepath = path + outputfilename
+        filepath = self.output_directory + outputfilename
 
         if os.path.exists(filepath):
             os.remove(filepath)
