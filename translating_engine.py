@@ -1,27 +1,29 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as sce
-from time import sleep, time
+from time import sleep
 from datetime import date
 import re
 from docx import Document
 import os
 import subprocess
 from webdriver_manager.chrome import ChromeDriverManager
+from news import News
 
 
 class Translator:
-    def __init__(self):
+    news_uploaded = list()
 
+    def __init__(self):
         self.driver = self.open_browser()
         self.translator = self.open_browser()
         self.translator.get('https://fanyi.sogou.com/')
         sleep(2)
-        self.link = ''
         self.output_prefix = self.prepare_prefix()
         self.output_directory = self.output_prefix[:-3] + '\\'
         self.stoutput = self.translator.find_element_by_class_name("output")
         self.stinput = self.translator.find_element_by_id("trans-input")
+        self.current_news = None
 
     @staticmethod
     def prepare_prefix():
@@ -91,17 +93,17 @@ class Translator:
         self.translator.quit()
 
     def parse_link(self):
-        parse_tmp = self.link.split('/')[2].split('.')
+        parse_tmp = self.current_news.source_link.split('/')[2].split('.')
         if parse_tmp[0] == 'www':
-            news_outlet = parse_tmp[1]
+            self.current_news.news_outlet = parse_tmp[1]
         else:
-            news_outlet = parse_tmp[0]
+            self.current_news.news_outlet = parse_tmp[0]
 
         headers = {'reuters': "//div[starts-with(@class, 'ArticlePage-article-header')]/h1",
                    'apnews': "//div[@class='CardHeadline']/div[1]/h1",
                    'aljazeera': "//header[@class='article-header']/h1",
                    'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
-                   'turkishminute': "//article/div[1]/header/h1",
+                   'turkishminute': "//header/h1",
                    'duvarenglish': "//div[@class='col-12']/header/h1",
                    'aa': "//div[@class='detay-spot-category']/h1",
                    'hurriyetdailynews': "//div[@class='content']/h1",
@@ -112,8 +114,8 @@ class Translator:
         bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
                   'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
-                  'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[3]/div[1]/div/div/p",
-                  'turkishminute': "//article/div[3]/p",
+                  'ahvalnews': "//div[@class='field--item']/div/div/p",
+                  'turkishminute': "//div[@class='td-post-content.td-pb-padding-side']/p",
                   'duvarenglish': "//div[@class='content-text']/*[self::p or self::h3]",
                   'aa': "//div[@class='detay-icerik']/div[1]/p",
                   'hurriyetdailynews': "//div[@class='content']/p",
@@ -123,7 +125,7 @@ class Translator:
 
         is_not_found = 0
         try:
-            header = self.driver.find_element_by_xpath(headers.get(news_outlet, "//h1")).text
+            header = self.driver.find_element_by_xpath(headers.get(self.current_news.news_outlet, "//h1")).text
         except sce.NoSuchElementException as error:
             print(f"We got an error message when searching for header:\n{error}\nTo be able to continue our "
                   f"work, we are selecting the header from the most common xpath, //h1.")
@@ -131,81 +133,142 @@ class Translator:
             is_not_found = 1
 
         try:
-            body = self.driver.find_elements_by_xpath(bodies.get(news_outlet, "//p"))
+            body = self.driver.find_elements_by_xpath(bodies.get(self.current_news.news_outlet, "//p"))
         except sce.NoSuchElementException as error:
             print(f"We got an error message when searching for body:\n{error}\nTo be able to continue our "
                   f"work, we are selecting the body from the most common xpath, //p.")
-            body = self.driver.find_element_by_xpath("//p")
+            body = self.driver.find_elements_by_xpath("//p")
             is_not_found = 1
 
         if is_not_found:
+            print("We stopped because we couldn't find header or body!")
             os.system("pause")
 
-        body = '\n'.join([item.text for item in body])
-        self.translate_write(header, body)
+        self.current_news.title_english = re.sub(r'[\\/:"*?<>|]+', '-', header)
 
-    def translate_write(self, header, body):
+        self.current_news.body_english = '\n'.join([item.text for item in body if item.text.strip()])
+
+        self.current_news.full_text_english = '\n'.join(
+            [self.current_news.title_english, self.current_news.body_english])
+        self.current_news.length_english = len(self.current_news.full_text_english)
+
+    def translate(self):
         """
-            Main translation method. It receives the header and body of a news, concatanates them, copies it to the
-            clipboard, then pastes it to the main translation webelement.
+            Main translation method. It receives full text from current_news variable, then pastes it to
+            the main translation webelement.
 
             Translation engine automatically translates it, then it collects the results from the output webelement.
 
-            At the end it clears the input area for the next news.
-        :param header: String. One line. Header of the news
-        :param body: String. Long. For some websites, contains many empty lines.
+            At the end it clears the input area for the next translation.
         :return:
         """
-        # We change special characters with dashes so they won't make any problem with the filenames later
-        header = re.sub(r'[\\/:"*?<>|]+', '-', header)
+        fulltext = self.current_news.full_text_english
 
-        fulltext = header + '\n' + body
-        if len(fulltext) >= 5000:
-            print("News is too long, only translating first 5000 characters")
-            fulltext = fulltext[:5000]
+        paragraphs = fulltext.split('\n')
+        par_count = len(paragraphs)
+        par_point = 0
+        output = ""
 
-        # Finding the input element and sending the text in
-        subprocess.run(['clip.exe'], input=fulltext.strip().encode('utf-16'), check=True)
-        # self.stinput.click()
-        self.stinput.send_keys(Keys.CONTROL, 'v')
-        # self.stinput.send_keys(fulltext)
-        sleep(2)
+        while par_point < par_count:
+            translate_text = ""
+            while par_point < par_count:
+                if len(translate_text) + len(paragraphs[par_point]) > 5000:
+                    break
+                if translate_text:
+                    translate_text = '\n'.join([translate_text, paragraphs[par_point]])
+                else:
+                    translate_text = paragraphs[par_point]
+                par_point += 1
+            # Copying body to clipboard
+            subprocess.run(['clip.exe'], input=translate_text.strip().encode('utf-16'), check=True)
+            # Pasting it into the translation input
+            self.stinput.send_keys(Keys.CONTROL, 'v')
+            sleep(2)
+            if output:
+                output = '\n'.join([output, self.stoutput.text])
+            else:
+                output = self.stoutput.text
 
+            # Cleaning the text area for next translation
+            clean_button = self.translator.find_element_by_xpath("//div[@class='trans-con']/span")
+            clean_button.click()
+
+        self.current_news.length_chinese = len(output)
         # Splitting output into smaller pieces
-        all_translation = self.stoutput.text.split('\n')
-        ch_heading = all_translation[0]
-        ch_body = all_translation[1:]
+        all_translation = output.split('\n')
+        self.current_news.title_chinese = all_translation[0]
+        self.current_news.body_chinese = '\n'.join(all_translation[1:])
 
-        self.output_news(ch_heading, ch_body)
+    def output_news(self, ch_heading=None, ch_body=None):
+        if ch_heading is None:
+            ch_heading = self.current_news.title_chinese
+        if ch_body is None:
+            ch_body = self.current_news.body_chinese.split('\n')
 
-        # Cleaning the text area for next translation
-        self.stinput.clear()
-
-    def output_news(self, ch_heading, ch_body):
         outputfile = Document()
 
         # Adding content to document
         outputfile.add_heading(ch_heading)
-        for string in ch_body:
-            outputfile.add_paragraph(string)
+        for par in ch_body:
+            par += '\n'
+            outputfile.add_paragraph(par)
 
         outputfile.add_paragraph(self.driver.current_url + '\n')
 
         # Making file name
-        outputfilename = self.output_prefix + ch_heading + '.docx'
+        self.current_news.document_name = self.output_prefix + ch_heading + '.docx'
 
         # Check if the named folder exists, if not make one
         if not os.path.exists(self.output_directory):
             os.mkdir(self.output_directory)
 
-        filepath = self.output_directory + outputfilename
+        self.current_news.document_path = self.output_directory + self.current_news.document_name
 
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        outputfile.save(filepath)
+        if os.path.exists(self.current_news.document_path):
+            os.remove(self.current_news.document_path)
 
-    def translate(self, link):
-        self.link = link
-        self.driver.get(self.link)
-        sleep(3)
+        outputfile.save(self.current_news.document_path)
+
+    def popup_check(self):
+        if self.current_news.news_outlet == 'apnews':
+            try:
+                pop_close = self.driver.find_element_by_xpath("//button[@class='sailthru-overlay-close']")
+                pop_close.click()
+                self.parse_link()
+            except sce.NoSuchElementException as error:
+                print(error)
+        elif self.current_news.news_outlet == 'ahvalnews':
+            try:
+                pop_close = self.driver.find_element_by_xpath("//a[@class='close']")
+                webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                self.parse_link()
+            except sce.NoSuchElementException as error:
+                print(error)
+
+    def translate_main(self, link):
+        self.current_news = News(link)
+        self.driver.get(self.current_news.source_link)
+        while self.driver.execute_script('return document.readyState;') != 'complete':
+            sleep(1)
+            print("Checking page readiness")
         self.parse_link()
+        self.popup_check()
+        self.translate()
+        self.output_news()
+        self.news_uploaded.append(self.current_news)
+
+    def display_news_uploaded(self):
+        for news in self.news_uploaded:
+            print(news.title_english, news.title_chinese, news.body_chinese, news.source_link, sep='\n')
+            print()
+
+
+if __name__ == '__main__':
+    trans = Translator()
+    url = "https://www.nordicmonitor.com/2021/01/turkish-intelligence-set-up-a-scheme-to-deceive-russian" \
+          "-investigators-in-karlovs-assassination/ "
+    try:
+        trans.translate_main(url)
+    finally:
+        trans.close_driver()
+        trans.display_news_uploaded()

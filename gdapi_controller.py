@@ -31,8 +31,8 @@ class GoogleDriveAPIController:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('tokens/token.pickle'):
-            with open('tokens/token.pickle', 'rb') as token:
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
                 self.creds = pickle.load(token)
 
         # If there are no (valid) credentials available, let the user log in.
@@ -41,10 +41,10 @@ class GoogleDriveAPIController:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials/credentials.json', SCOPES)
+                    'credentials.json', SCOPES)
                 self.creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('tokens/token.pickle', 'wb') as token:
+            with open('token.pickle', 'wb') as token:
                 pickle.dump(self.creds, token)
 
     def service_creation(self):
@@ -107,8 +107,8 @@ class GoogleDriveAPIController:
         file = self.drive_service.files().create(body=file_metadata,
                                                  media_body=media,
                                                  fields='id').execute()
-
-        print(f"File ID: {file.get('id')}")
+        file_link = "https://docs.google.com/document/d/" + file.get('id')
+        return name, file_link
 
     def folder_search(self, query_type="mimeType='application/vnd.google-apps.folder'"):
         """
@@ -149,10 +149,14 @@ class GoogleDriveAPIController:
     def upload_all_in_folder(self, folder_name='2020.11.20'):
         pathos = folder_name + '\\'
         files = os.listdir(pathos)
+        uploaded_files = list()
+
         for file in files:
             patho_file = pathos + file
-            self.docx_to_gdocs_uploader(file, patho_file)
+            uploaded_files.append(self.docx_to_gdocs_uploader(file, patho_file))
             print(patho_file)
+
+        return uploaded_files
 
 
 def main():
@@ -160,7 +164,7 @@ def main():
     # gdapi.folder_search()
     # gdapi.show_the_metadata()
     # gdapi.docx_to_gdocs_uploader()
-    gdapi.upload_all_in_folder()
+    print(gdapi.upload_all_in_folder("2020.12.07"))
 
 
 if __name__ == '__main__':
