@@ -1,0 +1,10 @@
+- Credentials should be put into single folder for maintaining sensibility
+- Warning system for headless selenium, translation character is less than 100, etc
+- Headless selenium
+- Auto-upload to wechat
+- Auto-upload to wordpress v 0.8
+- Fixing Turkishminute/ nordicmonitor translation issue
+- Reworking on problematic links translation
+- Daily News feed establishment
+- News selection from Daily News without the need of opening chrome browser v0.9
+- Overall GUI design for the program v1

@@ -1,7 +1,7 @@
 """
 How to create exe file from this script
 On terminal write this.
-pyinstaller main.py -n EtC-translator-v0.6 --onefile --distpath EtC-translator-for-all-v0.6 --add-data C:\ProgramData\Miniconda3\envs\EtC-Translator-for-all\Lib\site-packages\google_api_python_client-1.12.8.dist-info;google_api_python_client-1.12.8.dist-info
+pyinstaller main.py -n EtC-translator-v0.6 --onefile --distpath EtC-translator-for-all-v0.6 --add-data venv/Lib/site-packages/google_api_python_client-1.12.8.dist-info;google_api_python_client-1.12.8.dist-info
 pyinstaller should be installed beforehand. It is the main executable maker.
 main.py is the entrance point for the project.
 -n is for name

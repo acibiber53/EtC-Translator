@@ -104,24 +104,24 @@ class Translator:
                    'aljazeera': "//header[@class='article-header']/h1",
                    'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
                    'turkishminute': "//header/h1",
-                   'duvarenglish': "//div[@class='col-12']/header/h1",
+                   'duvarenglish': "//header/h1",
                    'aa': "//div[@class='detay-spot-category']/h1",
                    'hurriyetdailynews': "//div[@class='content']/h1",
                    'dailysabah': "//h1[@class='main_page_title']",
                    'trtwold': "//div[@class='noMedia.article-header-info']/h1",
-                   'nordicmonitor': "//div[@class='entry-header-details']/h1"}
+                   'nordicmonitor': "//div[@class='entry-header']/h1"}
 
         bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
                   'apnews': "//div[@class='Article']/p",
                   'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
                   'ahvalnews': "//div[@class='field--item']/div/div/p",
-                  'turkishminute': "//div[@class='td-post-content.td-pb-padding-side']/p",
+                  'turkishminute': "//div[@class='td-ss-main-content']/div[4]/p",
                   'duvarenglish': "//div[@class='content-text']/*[self::p or self::h3]",
                   'aa': "//div[@class='detay-icerik']/div[1]/p",
                   'hurriyetdailynews': "//div[@class='content']/p",
                   'dailysabah': "//div[@class='article_body']/p",
                   'trtworld': "//div[@class='contentBox bg-w noMedia']/p",
-                  'nordicmonitor': "//div[@class='entry-content']/p"}
+                  'nordicmonitor': "//div[@class='content-inner ']/p"}
 
         is_not_found = 0
         try:
@@ -129,7 +129,7 @@ class Translator:
         except sce.NoSuchElementException as error:
             print(f"We got an error message when searching for header:\n{error}\nTo be able to continue our "
                   f"work, we are selecting the header from the most common xpath, //h1.")
-            header = self.driver.find_element_by_xpath("//h1")
+            header = self.driver.find_element_by_xpath("//h1").text
             is_not_found = 1
 
         try:
@@ -265,8 +265,8 @@ class Translator:
 
 if __name__ == '__main__':
     trans = Translator()
-    url = "https://www.nordicmonitor.com/2021/01/turkish-intelligence-set-up-a-scheme-to-deceive-russian" \
-          "-investigators-in-karlovs-assassination/ "
+    url = "https://www.nordicmonitor.com/2021/01/turkish-intelligence-set-up-a-scheme-to-deceive-russian-investigators-in-karlovs-assassination/"
+
     try:
         trans.translate_main(url)
     finally:
