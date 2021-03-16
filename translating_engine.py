@@ -116,7 +116,7 @@ class Translator:
                   'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
                   'ahvalnews': "//div[@class='field--item']/div/div/p",
                   'turkishminute': "//div[@class='td-ss-main-content']/div[4]/p",
-                  'duvarenglish': "//div[@class='content-text']/*[self::p or self::h3]",
+                  'duvarenglish': "//div[@class='content-text']/*[self::p or self::h2 or self::h3]",
                   'aa': "//div[@class='detay-icerik']/div[1]/p",
                   'hurriyetdailynews': "//div[@class='content']/p",
                   'dailysabah': "//div[@class='article_body']/p",
