@@ -101,35 +101,39 @@ if __name__ == '__main__':
     translate_news(urllist)
 """
 
+# Sidebar layout for sidebar
+def sidebar_maker():
+    return [[sg.Text("Menu")],
+            [sg.HSeparator()],
+            [sg.Button('Translator', key='-TRANSLATOR-')],
+            [sg.Button('Exit', key='-EXIT-')]]
+
+# Title maker for main working column
+def title_maker():
+    return ([
+                sg.Text(f"{main_window_name}", justification='right')
+            ],
+            [
+                sg.HSeparator()
+            ])
+
 if __name__ == '__main__':
     translation_engine = 'baidu'
     main_window_name = "EtC Translator for all"
     columns_visibility = {'-WELCOME-' : True,
                           '-TRANSLATOR BEFORE-' : False}
 
-    # Sidebar layout for sidebar
-    sidebar_column = [[sg.Text("Menu")],
-                     [sg.HSeparator()],
-                     [sg.Button('Translator', key='-TRANSLATOR-')],
-                     [sg.Button('Exit', key='-EXIT-')]]
-
     # Different layouts for main working window
-    Title = ([
-                sg.Text(f"{main_window_name}", justification='right')
-            ],
-            [
-                sg.HSeparator()
-            ])
     # Opening Layout
     welcome_layout = [
-                        *Title,
+                        *title_maker(),
                         [
                             sg.Text("Welcome to this beautiful app! Thank you for your endless support!", justification="center")
                         ]
                      ]
 
     # Translation Layout Before
-    translation_layout_before = [*Title,
+    translation_layout_before = [*title_maker(),
                                  [sg.Text("News list for translation")],
                                  [sg.Listbox(
                                  values=[], enable_events=True, size=(40, 20), key="-NEWS LIST-"
@@ -138,21 +142,16 @@ if __name__ == '__main__':
                                  [sg.Button("Start Translating", key="-TRANSLATE BUTTON-")]]
 
     # Main working window layout
-    working_window_column = [
+    working_window_layout = [
                                 [
-                                    sg.Column(layout=sidebar_column, size=(180, 540)),
+                                    sg.Column(layout=sidebar_maker(), size=(180, 540)),
                                     sg.VSeparator(),
-                                    sg.Column(layout=welcome_layout, size=(580, 540))
+                                    sg.Column(layout=welcome_layout, size=(580, 540), key='-WELCOME-'),
+                                    sg.Column(layout=translation_layout_before, size=(580,540), key='-TRANSLATOR BEFORE-', visible=False)
                                 ]
                             ]
-    """                         [sg.HSeparator()],
-                                  [sg.Column(layout=welcome_layout, key='-WELCOME-'),
-                                   sg.Column(layout=translation_layout_before, visible=False, key='-TRANSLATOR BEFORE-')],
-                                  ]
-                                  ]
-         """
 
-    window = sg.Window(f'{main_window_name}', working_window_column, size=(800, 600))
+    window = sg.Window(f'{main_window_name}', working_window_layout, size=(800, 600))
     current_visible = '-WELCOME-'
     while True:
         event, values = window.read()
