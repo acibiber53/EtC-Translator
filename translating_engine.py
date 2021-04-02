@@ -9,21 +9,43 @@ import os
 import subprocess
 from webdriver_manager.chrome import ChromeDriverManager
 from news import News
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Translator:
     news_uploaded = list()
 
-    def __init__(self):
+    def __init__(self, tengine='sogou'):
         self.driver = self.open_browser()
+        self.preferred_translation_engine = tengine
         self.translator = self.open_browser()
-        self.translator.get('https://fanyi.sogou.com/')
+        self.stinput = None
+        self.stoutput = None
+        self.translator_settings()
         sleep(2)
         self.output_prefix = self.prepare_prefix()
         self.output_directory = self.output_prefix[:-3] + '\\'
-        self.stoutput = self.translator.find_element_by_class_name("output")
-        self.stinput = self.translator.find_element_by_id("trans-input")
         self.current_news = None
+
+    def translator_settings(self):
+        if self.preferred_translation_engine == 'sogou':
+            self.translator.get('https://fanyi.sogou.com/')
+            self.stoutput = self.translator.find_element_by_class_name("output")
+            self.stinput = self.translator.find_element_by_id("trans-input")
+        elif self.preferred_translation_engine == 'baidu':
+            self.translator.get('https://fanyi.baidu.com/#en/zh/')
+            try:
+                popup_element = self.translator.find_element_by_class_name("desktop-guide-close")
+                popup_element.click()
+            except:
+                print("NO popups I guess")
+            try:
+                self.stinput = self.translator.find_element_by_id("baidu_translate_input")
+                self.stoutput = self.translator.find_element_by_class_name("trans-right")
+            except sce.NoSuchElementException as e:
+                print("Translation Engine might have changed the element structure. Update needed!")
 
     @staticmethod
     def prepare_prefix():
@@ -152,16 +174,7 @@ class Translator:
             [self.current_news.title_english, self.current_news.body_english])
         self.current_news.length_english = len(self.current_news.full_text_english)
 
-    def translate(self):
-        """
-            Main translation method. It receives full text from current_news variable, then pastes it to
-            the main translation webelement.
-
-            Translation engine automatically translates it, then it collects the results from the output webelement.
-
-            At the end it clears the input area for the next translation.
-        :return:
-        """
+    def translate_with_sogou(self):
         fulltext = self.current_news.full_text_english
 
         paragraphs = fulltext.split('\n')
@@ -193,11 +206,76 @@ class Translator:
             clean_button = self.translator.find_element_by_xpath("//div[@class='trans-con']/span")
             clean_button.click()
 
+            return output
+
+    def translate_with_baidu(self):
+        fulltext = self.current_news.full_text_english
+
+        paragraphs = fulltext.split('\n')
+        par_count = len(paragraphs)
+        par_point = 0
+        output = ""
+
+        while par_point < par_count:
+            translate_text = ""
+            while par_point < par_count:
+                if len(translate_text) + len(paragraphs[par_point]) > 5000:
+                    break
+                if translate_text:
+                    translate_text = '\n'.join([translate_text, paragraphs[par_point]])
+                else:
+                    translate_text = paragraphs[par_point]
+                par_point += 1
+            # Copying body to clipboard
+            subprocess.run(['clip.exe'], input=translate_text.strip().encode('utf-16'), check=True)
+            # Pasting it into the translation input
+            self.stinput.send_keys(Keys.CONTROL, 'v')
+
+            translated_pars = False
+            while not translated_pars:
+                translated_pars = self.stoutput.find_elements_by_class_name("ordinary-output.target-output.clearfix")
+                sleep(1)
+
+            tmp_res = '\n'.join([elem.text for elem in translated_pars])
+
+            if output:
+                output = '\n'.join([output, tmp_res])
+            else:
+                output = tmp_res
+
+            # Cleaning the text area for next translation
+            clean_button = self.translator.find_element_by_class_name("textarea-clear-btn")
+            clean_button.click()
+
+        return output
+
+    def translation_engine_selector(self):
+        if self.preferred_translation_engine == 'sogou':
+            return self.translate_with_sogou()
+        elif self.preferred_translation_engine == 'baidu':
+            return self.translate_with_baidu()
+
+    def translate(self):
+        """
+            Main translation method. It receives full text from current_news variable, then pastes it to
+            the main translation webelement.
+
+            Translation engine automatically translates it, then it collects the results from the output webelement.
+
+            At the end it clears the input area for the next translation.
+        :return:
+        """
+
+        output = self.translation_engine_selector()
+
         self.current_news.length_chinese = len(output)
+        logging.debug(f"Original output is like this:\n{output}")
         # Splitting output into smaller pieces
         all_translation = output.split('\n')
         self.current_news.title_chinese = all_translation[0]
         self.current_news.body_chinese = '\n'.join(all_translation[1:])
+        logging.debug(f"Translated chinese title is: {self.current_news.title_chinese}")
+        logging.debug(f"Translated chinese body is: {self.current_news.body_chinese}")
 
     def output_news(self, ch_heading=None, ch_body=None):
         if ch_heading is None:
@@ -208,7 +286,9 @@ class Translator:
         outputfile = Document()
 
         # Adding content to document
+        logging.debug(f"This is Chinese heading for the document: {ch_heading}")
         outputfile.add_heading(ch_heading)
+        logging.debug(f"This is Chinese body for the document: {ch_body}")
         for par in ch_body:
             par += '\n'
             outputfile.add_paragraph(par)
@@ -264,8 +344,8 @@ class Translator:
 
 
 if __name__ == '__main__':
-    trans = Translator()
-    url = "https://www.nordicmonitor.com/2021/01/turkish-intelligence-set-up-a-scheme-to-deceive-russian-investigators-in-karlovs-assassination/"
+    trans = Translator("baidu")
+    url = "https://www.turkishminute.com/2021/03/31/game-of-thrones-author-voice-support-for-women-in-turkey-over-istanbul-convention-exit/"
 
     try:
         trans.translate_main(url)

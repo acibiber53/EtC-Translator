@@ -23,7 +23,7 @@ from gdapi_controller import GoogleDriveAPIController as GDAPIC
 from trello_controller import TrelloController
 import time
 import os
-
+import PySimpleGUI as sg
 
 def htm_to_urllist(doc_name = "news-to-translate.htm"):
     """This method opens a predetermined htm file that is extracted from the bookmarks of chrome, and
@@ -67,7 +67,7 @@ def translate_news(urllist):
     if urllist == -1:
         return
 
-    trs = Translator()
+    trs = Translator("baidu")
     gdapi = GDAPIC()
     trel = TrelloController()
     trello_daily_card = list()
@@ -86,7 +86,8 @@ def translate_news(urllist):
             print(f"Uploaded!\nFile Name: {news_title}\nFile URL: {trs.current_news.google_upload_link}\n")
 
             create_card_with_trello(trel, trs.current_news)
-
+    except Exception as error:
+        print(error)
 
     finally:
         upload_daily_news_to_trello(trel, trello_daily_card, trs.current_news.translation_date)
@@ -94,7 +95,73 @@ def translate_news(urllist):
         print("All translation job has finished!")
         os.system("pause")
 
-
+"""
 if __name__ == '__main__':
     urllist = htm_to_urllist()
     translate_news(urllist)
+"""
+
+if __name__ == '__main__':
+    translation_engine = 'baidu'
+    main_window_name = "EtC Translator for all"
+    columns_visibility = {'-WELCOME-' : True,
+                          '-TRANSLATOR BEFORE-' : False}
+
+    # Sidebar layout for sidebar
+    sidebar_column = [[sg.Text("Menu")],
+                     [sg.HSeparator()],
+                     [sg.Button('Translator', key='-TRANSLATOR-')],
+                     [sg.Button('Exit', key='-EXIT-')]]
+
+    # Different layouts for main working window
+    Title = ([
+                sg.Text(f"{main_window_name}", justification='right')
+            ],
+            [
+                sg.HSeparator()
+            ])
+    # Opening Layout
+    welcome_layout = [
+                        *Title,
+                        [
+                            sg.Text("Welcome to this beautiful app! Thank you for your endless support!", justification="center")
+                        ]
+                     ]
+
+    # Translation Layout Before
+    translation_layout_before = [*Title,
+                                 [sg.Text("News list for translation")],
+                                 [sg.Listbox(
+                                 values=[], enable_events=True, size=(40, 20), key="-NEWS LIST-"
+                                  )],
+                                 [sg.Text(f"Translation engine being used : {translation_engine}")],
+                                 [sg.Button("Start Translating", key="-TRANSLATE BUTTON-")]]
+
+    # Main working window layout
+    working_window_column = [
+                                [
+                                    sg.Column(layout=sidebar_column, size=(180, 540)),
+                                    sg.VSeparator(),
+                                    sg.Column(layout=welcome_layout, size=(580, 540))
+                                ]
+                            ]
+    """                         [sg.HSeparator()],
+                                  [sg.Column(layout=welcome_layout, key='-WELCOME-'),
+                                   sg.Column(layout=translation_layout_before, visible=False, key='-TRANSLATOR BEFORE-')],
+                                  ]
+                                  ]
+         """
+
+    window = sg.Window(f'{main_window_name}', working_window_column, size=(800, 600))
+    current_visible = '-WELCOME-'
+    while True:
+        event, values = window.read()
+        print(event, values)
+        if event in (None, '-EXIT-'):
+            break
+        if event == '-TRANSLATOR-':
+            window[current_visible].update(visible=False)
+            window['-TRANSLATOR BEFORE-'].update(visible=True)
+            current_visible = '-TRANSLATOR BEFORE-'
+
+    window.close()
