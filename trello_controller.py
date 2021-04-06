@@ -1,13 +1,15 @@
 import requests
 from datetime import datetime, timedelta
+import json
 
 
 class TrelloController:
-    def __init__(self):
+    def __init__(self, target_list_name='准备中'):
         self.key, self.token = self.get_credentials()
         self.id_board = self.get_board_id()
         self.all_lists = self.get_all_lists()
-        self.target_list = self.get_target_list('准备中')
+        self.target_list = self.get_target_list(target_list_name)
+        self.attachment_list = self.get_all_attachment_from_cards_in_target_list()
 
     @staticmethod
     def get_board_id():
@@ -122,10 +124,55 @@ class TrelloController:
 
         return response.json()
 
+    def get_all_attachments_on_a_card(self, card_id):
+        """
+        Gets all the attachments from a single card. Attachments normally aren't available through self.get_cards_in_a_list()
+        function. This is why we need to get all the attachments for a card first.
+
+        :param card_id: Trello Card id
+        :return: Dictionary. Returns the response of all the attachments on a card
+        """
+        url = f"https://api.trello.com/1/cards/{card_id}/attachments"
+
+        headers = {
+            "Accept": "application/json"
+        }
+
+        query = {
+            'key': self.key,
+            'token': self.token
+        }
+
+        response = requests.request(
+            "GET",
+            url,
+            headers=headers,
+            params=query
+        )
+
+        return response.json()
+
+    def get_all_attachment_from_cards_in_target_list(self):
+        """
+        This function simply iterates over each card in a list and gets their all attachments in a list.
+        :return: list of attachments. Returns all the attachments as a list.
+        """
+        attach_list = list()
+
+        for card in self.get_cards_in_a_list(self.target_list['id']):
+            for attachment in self.get_all_attachments_on_a_card(card['id']):
+                attach_list.append(attachment)
+
+        return attach_list
+
+    def get_all_urls_from_a_lists_attachments(self):
+        return [elem['url'] for elem in self.attachment_list]
 
 if __name__ == '__main__':
-    tre = TrelloController()
+    tre = TrelloController("在上传")
+
+    print('\n'.join(tre.get_all_urls_from_a_lists_attachments()))
     # print(tre.target_list)
     # print(tre.get_cards_in_a_list(tre.target_list.get('id')))
-    tre.create_card_then_attach_link(name="test7", desc="[test again](www.google.com)", url_source="https://docs.google.com/document/d/1exn-CA7tMxsWh8j3fGyHBon8lA_5bX80cSimCcehwrw/edit")
+    # tre.create_card_then_attach_link(name="test7", desc="[test again](www.google.com)", url_source="https://docs.google.com/document/d/1exn-CA7tMxsWh8j3fGyHBon8lA_5bX80cSimCcehwrw/edit")
     # print((datetime.today()+timedelta(days=1, hours=11)).isoformat())
