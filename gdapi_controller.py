@@ -14,9 +14,10 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import trello_controller
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
+SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/documents.readonly']
 
 
 class GoogleDriveAPIController:
@@ -49,6 +50,7 @@ class GoogleDriveAPIController:
 
     def service_creation(self):
         self.drive_service = build('drive', 'v3', credentials=self.creds)
+        self.docs_service = build('docs', 'v1', credentials=self.creds)
 
     def start_the_api(self):
         self.credential_authorization()
@@ -158,13 +160,66 @@ class GoogleDriveAPIController:
 
         return uploaded_files
 
+    def read_structural_elements(self, elements):
+        """ Copied directly from https://developers.google.com/docs/api/samples/extract-text#python
+            Recurses through a list of Structural Elements to read a document's text where text may be
+            in nested elements.
+
+            Args:
+                elements: a list of Structural Elements.
+        """
+        text = ''
+        for value in elements:
+            if 'paragraph' in value:
+                elements = value.get('paragraph').get('elements')
+                for elem in elements:
+                    text += self.read_paragraph_element(elem)
+            elif 'table' in value:
+                # The text in table cells are in nested Structural Elements and tables may be
+                # nested.
+                table = value.get('table')
+                for row in table.get('tableRows'):
+                    cells = row.get('tableCells')
+                    for cell in cells:
+                        text += self.read_structural_elements(cell.get('content'))
+            elif 'tableOfContents' in value:
+                # The text in the TOC is also in a Structural Element.
+                toc = value.get('tableOfContents')
+                text += self.read_structural_elements(toc.get('content'))
+        return text
+
+    def get_a_documents_content(self, DOCUMENT_ID):
+        doc = self.docs_service.documents().get(documentId=DOCUMENT_ID).execute()
+        doc_content_raw = doc.get('body').get('content')
+        doc_content_organized = self.read_structural_elements(doc_content_raw)
+        doc_content_cleaned = [elem.strip() for elem in doc_content_organized.split('\n') if elem]
+        return doc_content_cleaned
+
+    def read_paragraph_element(self, element):
+        """Returns the text in the given ParagraphElement.
+
+            Args:
+                element: a ParagraphElement from a Google Doc.
+        """
+        text_run = element.get('textRun')
+        if not text_run:
+            return ''
+        return text_run.get('content')
+
+    def doc_id_from_url(self, url):
+        return url.split('/')[-1]
+
 
 def main():
     gdapi = GoogleDriveAPIController()
     # gdapi.folder_search()
     # gdapi.show_the_metadata()
     # gdapi.docx_to_gdocs_uploader()
-    print(gdapi.upload_all_in_folder("2020.12.07"))
+    # GDAPI test with doc upload -> print(gdapi.upload_all_in_folder("Test Folder"))
+    tre = trello_controller.TrelloController("在上传")
+    news_list = tre.get_all_urls_from_a_lists_attachments()
+    doc_id = gdapi.doc_id_from_url(news_list[0])
+    print(gdapi.get_a_documents_content(doc_id))
 
 
 if __name__ == '__main__':
