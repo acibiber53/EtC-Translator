@@ -9,17 +9,17 @@ class TrelloController:
         self.id_board = self.get_board_id()
         self.all_lists = self.get_all_lists()
         self.target_list = self.get_target_list(target_list_name)
-        self.attachment_list = self.get_all_attachment_from_cards_in_target_list()
+        self.attachment_list = list()
 
     @staticmethod
     def get_board_id():
-        with open("trello_board_id.txt", "r") as file:
+        with open("Creds/trello_board_id.txt", "r") as file:
             board_id = file.readline().strip()
         return board_id
 
     @staticmethod
     def get_credentials():
-        with open("trello_creds.txt", "r") as file:
+        with open("Creds/trello_creds.txt", "r") as file:
             key = file.readline().strip()
             token = file.readline().strip()
         return key, token
@@ -44,6 +44,9 @@ class TrelloController:
         for list in self.all_lists:
             if list.get('name') == target_list_name:
                 return list
+
+    def set_target_list(self, list_name):
+        self.target_list = self.get_target_list(list_name)
 
     def create_a_card(self,
                       name="Test",
@@ -166,13 +169,14 @@ class TrelloController:
         return attach_list
 
     def get_all_urls_from_a_lists_attachments(self):
+        self.attachment_list = self.get_all_attachment_from_cards_in_target_list()
         return [elem['url'] for elem in self.attachment_list]
+
 
 if __name__ == '__main__':
     tre = TrelloController("在上传")
-
     print('\n'.join(tre.get_all_urls_from_a_lists_attachments()))
-    # print(tre.target_list)
-    # print(tre.get_cards_in_a_list(tre.target_list.get('id')))
-    # tre.create_card_then_attach_link(name="test7", desc="[test again](www.google.com)", url_source="https://docs.google.com/document/d/1exn-CA7tMxsWh8j3fGyHBon8lA_5bX80cSimCcehwrw/edit")
-    # print((datetime.today()+timedelta(days=1, hours=11)).isoformat())
+    # print(tre.target_list) print(tre.get_cards_in_a_list(tre.target_list.get('id')))
+    # tre.create_card_then_attach_link(name="test7", desc="[test again](www.google.com)",
+    # url_source="https://docs.google.com/document/d/1exn-CA7tMxsWh8j3fGyHBon8lA_5bX80cSimCcehwrw/edit") print((
+    # datetime.today()+timedelta(days=1, hours=11)).isoformat())

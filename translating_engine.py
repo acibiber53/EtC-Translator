@@ -121,7 +121,7 @@ class Translator:
         else:
             self.current_news.news_outlet = parse_tmp[0]
 
-        headers = {'reuters': "//div[starts-with(@class, 'ArticlePage-article-header')]/h1",
+        headers = {'reuters': "//h1",
                    'apnews': "//div[@class='CardHeadline']/div[1]/h1",
                    'aljazeera': "//header[@class='article-header']/h1",
                    'ahvalnews': "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
@@ -133,7 +133,7 @@ class Translator:
                    'trtwold': "//div[@class='noMedia.article-header-info']/h1",
                    'nordicmonitor': "//div[@class='entry-header']/h1"}
 
-        bodies = {'reuters': "//div[@class='ArticleBodyWrapper']/*[self::p or self::h3]",
+        bodies = {'reuters': "//p",
                   'apnews': "//div[@class='Article']/p",
                   'aljazeera': "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
                   'ahvalnews': "//div[@class='field--item']/div/div/p",
@@ -345,7 +345,7 @@ class Translator:
 
 if __name__ == '__main__':
     trans = Translator("baidu")
-    url = "https://www.turkishminute.com/2021/03/31/game-of-thrones-author-voice-support-for-women-in-turkey-over-istanbul-convention-exit/"
+    url = "https://www.reuters.com/world/middle-east/turkey-says-all-issues-with-greece-be-discussed-meeting-thursday-2021-04-15/"
 
     try:
         trans.translate_main(url)

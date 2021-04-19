@@ -32,8 +32,8 @@ class GoogleDriveAPIController:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('token.pickle'):
-            with open('token.pickle', 'rb') as token:
+        if os.path.exists('Creds/token.pickle'):
+            with open('Creds/token.pickle', 'rb') as token:
                 self.creds = pickle.load(token)
 
         # If there are no (valid) credentials available, let the user log in.
@@ -42,10 +42,10 @@ class GoogleDriveAPIController:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPES)
+                    'Creds/credentials.json', SCOPES)
                 self.creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('token.pickle', 'wb') as token:
+            with open('Creds/token.pickle', 'wb') as token:
                 pickle.dump(self.creds, token)
 
     def service_creation(self):
@@ -90,7 +90,7 @@ class GoogleDriveAPIController:
 
         """
         if not self.output_folder_id:
-            with open("folder_id.txt", "r") as text:
+            with open("Creds/folder_id.txt", "r") as text:
                 self.output_folder_id = text.readline().strip()
 
         if not folder_id:
