@@ -2,9 +2,9 @@
 - Headless selenium
 - Asynchronous translation for the given links (if possible, maybe requires multiple selenium openings,
                                                  maybe dangerous with many requests)
-- Auto-upload to wechat
-- Auto-upload to wordpress v 0.8
+- Auto-upload to wechat v 0.95
+- Auto-upload to wordpress v 0.100
 - Reworking on problematic links translation
 - Daily News feed establishment
-- News selection from Daily News without the need of opening chrome browser v0.9
-- Overall GUI design for the program v1
+- News selection from Daily News without the need of opening chrome browser v0.150
+- Overall GUI design for the program v0.200
