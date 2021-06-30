@@ -42,3 +42,7 @@ urllib3==1.25.11
 webdriver-manager==3.2.2
 win-inet-pton==1.1.0
 wincertstore==0.2
+
+PySimpleGUI~=4.38.0
+pandas~=1.2.4
+openpyxl~=3.0.7

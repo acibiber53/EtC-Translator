@@ -328,9 +328,14 @@ class Translator:
     def translate_main(self, link):
         self.current_news = News(link)
         self.driver.get(self.current_news.source_link)
+        i=0
         while self.driver.execute_script('return document.readyState;') != 'complete':
             sleep(1)
+            i+=1
             print("Checking page readiness")
+            if i == 15:
+                self.driver.execute_script("window.stop();")
+                break
         self.parse_link()
         self.popup_check()
         self.translate()
@@ -344,8 +349,8 @@ class Translator:
 
 
 if __name__ == '__main__':
-    trans = Translator("baidu")
-    url = "https://www.reuters.com/world/middle-east/turkey-says-all-issues-with-greece-be-discussed-meeting-thursday-2021-04-15/"
+    trans = Translator("sogou")
+    url = "https://www.hurriyetdailynews.com/floating-tennis-court-on-golden-horn-opens-with-mayors-match-164878"
 
     try:
         trans.translate_main(url)

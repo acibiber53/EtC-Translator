@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 from translating_engine import Translator
 from gdapi_controller import GoogleDriveAPIController as GDAPIC
 from trello_controller import TrelloController
+from wechat import Wechat
 import time
 import os
 import PySimpleGUI as sg
@@ -31,8 +32,9 @@ class EtcTranslatorForAll:
     def __init__(self, news_link_document_path="news-to-translate.htm"):
         # Translation variables
         self.url_title_list, self.url_list = self.htm_to_urllist(news_link_document_path)
-        self.translation_engine = "baidu"
-        self.trs = self.gdapi = self.trel = None
+        self.translation_engine = "sogou"
+        self.gdapi = GDAPIC()
+        self.trs = self.trel = None
 
         # GUI variables
         self.main_window_name = "EtC Translator for all"
@@ -41,10 +43,15 @@ class EtcTranslatorForAll:
         self.welcome_layout = \
             self.translation_layout_before = \
             self.translation_layout_during = \
-            self.working_window_layout = None
+            self.working_window_layout = \
+            self.upload_layout = None
 
         self.set_layouts()
         self.window = self.current_visible = self.print = None
+
+        # Uploading variables
+        self.upload_news_list = list()
+        self.wc = None
 
     @staticmethod
     def htm_to_urllist(doc_name):
@@ -56,7 +63,7 @@ class EtcTranslatorForAll:
         2 - Open the file, find your folder, copy the content.
         3 - Open MS Word, paste the content, save the folder as .htm/ .html"""
         try:
-            with open(doc_name) as file:
+            with open(doc_name, encoding='utf-8') as file:
                 soup = BeautifulSoup(file, "lxml")
         except FileNotFoundError:
             print(f"We couldn't find your document, please make sure to have a document named {doc_name}. "
@@ -75,7 +82,11 @@ class EtcTranslatorForAll:
         def sidebar_maker():
             return [[sg.Text("Menu")],
                     [sg.HSeparator()],
-                    [sg.Button('Translator', key='-TRANSLATOR-')],
+                    [sg.Button('News Feed', key='-NEWS FEED SBB-')],
+                    [sg.Button('Translator', key='-TRANSLATOR SBB-')],
+                    [sg.Button('Sunday Collector', key='-SUNDAY COL SBB-')],
+                    [sg.Button('Uploader', key='-UPLOADER SBB-')],
+                    [sg.Button('Settings', key='-SETTINGS SBB-')],
                     [sg.Button('Exit', key='-EXIT-')]]
 
         # Title maker for main working column
@@ -95,6 +106,8 @@ class EtcTranslatorForAll:
                 sg.Text("Welcome to this beautiful app! Thank you for your endless support!", justification="center")
             ]
         ]
+
+        # TODO News Feed Layouts
 
         # Translation Layout Before
         self.translation_layout_before = [*title_maker("Translator"),
@@ -120,6 +133,22 @@ class EtcTranslatorForAll:
                                                           pad=((0, 0), (15, 15)), )]
                                           ]
 
+        # TODO Translation Layout After
+
+        # TODO Sunday Collector Layout
+
+        # Uploading Layout
+        self.upload_layout = [*title_maker("Uploader"),
+                              [sg.Text("News to upload:")],
+                              [sg.Multiline(default_text="News titles are coming from 在上传",
+                                            size=(80, 10),
+                                            key="-UPLOAD INFO-",
+                                            write_only=True,
+                                            auto_refresh=True)],
+                              [sg.Checkbox("Wechat", default=True, key="-WECHAT UPLOAD-")],
+                              [sg.Checkbox("WordPress", default=False, key="-WORDPRESS UPLOAD-")],
+                              [sg.Button("Start Uploading", key="-UPLOAD BUTTON-")]]
+
         # Main working window layout
         self.working_window_layout = [
             [
@@ -129,13 +158,15 @@ class EtcTranslatorForAll:
                 sg.Column(layout=self.translation_layout_before, size=(580, 540),
                           key='-TRANSLATOR BEFORE-', visible=False),
                 sg.Column(layout=self.translation_layout_during, size=(580, 540),
-                          key='-TRANSLATOR DURING-', visible=False)
+                          key='-TRANSLATOR DURING-', visible=False),
+                sg.Column(layout=self.upload_layout, size=(580, 540),
+                          key='-UPLOADER PAGE-', visible=False)
             ]
         ]
 
-    def print_set(self):
+    def print_set(self, multiline_key):
         def mprint(*args, **kwargs):
-            self.window["-NEWS INFO-"].print(*args, **kwargs)
+            self.window[multiline_key].print(*args, **kwargs)
         return mprint
 
     def change_layout(self, target):
@@ -162,7 +193,6 @@ class EtcTranslatorForAll:
             return
 
         self.trs = Translator(self.translation_engine)
-        self.gdapi = GDAPIC()
         self.trel = TrelloController()
         trello_daily_card = list()
 
@@ -193,47 +223,73 @@ class EtcTranslatorForAll:
             sg.popup("All translation job has finished!")
 
     def get_news_from_trello(self):
-        self.trel.set_target_list("在上传")
+        if self.trel is None:
+            self.trel = TrelloController("在上传")
+        else:
+            self.trel.set_target_list("在上传")
         news_urls_to_upload = self.trel.get_all_urls_from_a_lists_attachments()
+        news_urls_to_upload = [elem for elem in news_urls_to_upload if 'google' in elem]
+        for news_url in news_urls_to_upload:
+            doc_id = self.gdapi.doc_id_from_url(news_url)
+            text = self.gdapi.get_a_documents_content(doc_id) # text is a list
+            self.upload_news_list.append(text)
 
     def upload_news(self):
-        self.get_news_from_trello()
-        # TODO upload_it_to_wechat()
+        self.wc.start_the_system()
+        self.wc.enter_to_wechat()
+        self.wc.open_text_editor_from_home()
+        for news in self.upload_news_list:
+            try:
+                self.wc.daily_news_adder(news[0], news[-1], "no image url", news[1:-1])
+            except Exception as error:
+                print(error)
+                print("it happened around daily news")
+            self.wc.open_next_news()
+
         # TODO Do things with window in the meantime
 
     def main_loop(self):
         while True:
             event, values = self.window.read()
-            self.print(event, values)
+            print(event, values)
             if event in (None, '-EXIT-'):
                 break
-            if event == '-TRANSLATOR-':
+            if event == '-TRANSLATOR SBB-':
                 self.change_layout("-TRANSLATOR BEFORE-")
 
             if event == "-TRANSLATE BUTTON-":
                 if self.current_visible == "-TRANSLATOR DURING-":
                     sg.popup("News are currently being translated, please wait until it finishes!")
                     continue
+                self.print = self.print_set("-NEWS INFO-")
                 self.change_layout("-TRANSLATOR DURING-")
                 # threading.Thread(target=translate_news, args=(window, urlinfo[1],), daemon=True).start()
                 self.translate_news()
 
-            if event == "-UPLOAD-":
-                self.change_layout("-UPLOAD BEFORE-")
+            if event == "-UPLOADER SBB-":
+                self.change_layout("-UPLOADER PAGE-")
+                self.print = self.print_set("-UPLOAD INFO-")
+                if not self.upload_news_list:
+                    self.get_news_from_trello()
+                self.print(self.upload_news_list)
 
             if event == "-UPLOAD BUTTON-":
-                self.change_layout("-UPLOAD DURING-")
-                self.upload_news()
+                # self.change_layout("-UPLOAD DURING-")
+                self.wc = Wechat()
+                try:
+                    self.upload_news()
+                except Exception as error:
+                    print(error)
+                    self.wc.close_browser()
 
         self.window.close()
 
     def start_the_program(self):
         self.window = sg.Window(f'{self.main_window_name}', self.working_window_layout, size=(800, 600))
         self.current_visible = '-WELCOME-'
-        self.print = self.print_set()
         self.main_loop()
 
 
 if __name__ == '__main__':
-    EtC = EtcTranslatorForAll()
+    EtC = EtcTranslatorForAll("C:/Users/acibi/Downloads/exported-bookmarks.html")
     EtC.start_the_program()

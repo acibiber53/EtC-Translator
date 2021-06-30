@@ -8,3 +8,4 @@
 - Daily News feed establishment
 - News selection from Daily News without the need of opening chrome browser v0.150
 - Overall GUI design for the program v0.200
+- MiddleEast Eye has browser check, gotta add way around
