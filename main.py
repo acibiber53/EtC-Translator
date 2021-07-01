@@ -238,13 +238,17 @@ class EtcTranslatorForAll:
         self.wc.start_the_system()
         self.wc.enter_to_wechat()
         self.wc.open_text_editor_from_home()
+        i = 0
         for news in self.upload_news_list:
+            if i == 1:
+                break
             try:
-                self.wc.daily_news_adder(news[0], news[-1], "no image url", news[1:-1])
+                self.wc.daily_news_adder(news[0], news[-1], "", news[1:-1])
             except Exception as error:
                 print(error)
                 print("it happened around daily news")
-            self.wc.open_next_news()
+            i += 1
+            # self.wc.open_next_news()
 
         # TODO Do things with window in the meantime
 

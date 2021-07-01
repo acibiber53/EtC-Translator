@@ -189,6 +189,12 @@ class GoogleDriveAPIController:
         return text
 
     def get_a_documents_content(self, DOCUMENT_ID):
+        """
+        Takes a document id, turns it into a list of strings made of all the paragraphs.
+
+        :param DOCUMENT_ID:str - This is a document ID for any Google Docs document.
+        :return: list made of contents of the document
+        """
         doc = self.docs_service.documents().get(documentId=DOCUMENT_ID).execute()
         doc_content_raw = doc.get('body').get('content')
         doc_content_organized = self.read_structural_elements(doc_content_raw)

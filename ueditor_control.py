@@ -1,5 +1,6 @@
 import functools
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 import selenium.common.exceptions as sce
 from time import sleep
 import os
@@ -10,7 +11,8 @@ class UEditorControl:
         self.driver = driver
         self.is_initialized = False
         self.ueditor_iframe = self.driver.find_element_by_id("ueditor_0")
-        self.editor_body = self.driver.find_element_by_tag_name("body")
+        self.iframe_body = None  # We need to find body in the iframe after switching to the iframe. Otherwise we
+        # can't use it. Iframes are different content than whole page, and to use them you need to switch first.
 
     def switcher(func):
         """
@@ -18,27 +20,43 @@ class UEditorControl:
             then does the function,
             then switches out to the default content.
         """
+
         @functools.wraps(func)
         def wrapper_decorator(self, *args, **kwargs):
             self.driver.switch_to.frame(self.ueditor_iframe)
             value = func(self, *args, **kwargs)
             self.driver.switch_to.default_content()
             return value
+
         return wrapper_decorator
 
     def initialize(self):
-        self.driver.execute_script(f"arguments[0].innerHTML = ''", self.editor_body)
+        self.iframe_body = self.driver.find_element_by_tag_name("body")
+        self.driver.execute_script(f"arguments[0].innerHTML = ''", self.iframe_body)
         self.is_initialized = True
 
     def inject_the_html(self, html):
         if not self.is_initialized:
             self.initialize()
-        self.driver.execute_script(f"arguments[0].innerHTML += '{html}'", self.editor_body)
+        self.iframe_body = self.driver.find_element_by_tag_name("body")
+        self.driver.execute_script(f"arguments[0].innerHTML += '{html}'", self.iframe_body)
 
     @switcher
     def add_blank_line(self):
         blank_html = """<p><br></p>"""
         self.inject_the_html(blank_html)
+
+    @switcher
+    def add_a_paragraph(self, text="Test"):
+        paragraph_html = f"<p>{text}</p>"
+        self.inject_the_html(paragraph_html)
+
+    @switcher
+    def add_an_image(self, img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg"):
+        img_html = f"""<p style="text-align: center">\
+                       <img data-s="300,640" data-galleryid="" data-type="jpeg" class="rich_pages" src={img_url} style="" data-ratio="0.6104815864022662" data-w="706" data-imgqrcoded="1">\
+                       </p>"""
+        self.inject_the_html(img_html)
 
     @switcher
     def add_follow_header(self):
@@ -74,7 +92,9 @@ class UEditorControl:
         self.inject_the_html(notice_html)
 
     @switcher
-    def add_one_news_for_weekly(self, title="这里是标题", title_url="https://mp.weixin.qq.com/", img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg", text="这里写正文吧"):
+    def add_one_news_for_weekly(self, title="这里是标题", title_url="https://mp.weixin.qq.com/",
+                                img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg",
+                                text="这里写正文吧"):
         one_news_for_weekly_html = f"""<section style="margin-top: 10px;white-space: normal;font-size: 16px;text-align: center;box-sizing: border-box;">\
                                      <section style="padding: 10px;display: inline-block;width: 491.292px;vertical-align: top;border-style: solid solid none;border-width: 1px;border-radius: 0px;border-color: rgb(62, 62, 62);box-sizing: border-box;">\
                                      <section style="margin-top: 10px;margin-bottom: 10px;box-sizing: border-box;">\
@@ -95,10 +115,14 @@ class UEditorControl:
                                      </section></section></section></section></section>"""
         self.inject_the_html(one_news_for_weekly_html)
 
-    def add_daily_news(self, title="标题", url="", img_url="", text="这里应该有个内容"):
+    def add_daily_news(self, img_url="", text=["这里应该有个内容","里面会有一些新闻"]):
         self.add_follow_header()
-        for i in range(5):
+        self.add_blank_line()
+        self.add_an_image(img_url)
+        for par in text:
             self.add_blank_line()
+            self.add_a_paragraph(par)
+        self.add_blank_line()
         self.add_end_qr()
 
     @switcher
@@ -164,17 +188,22 @@ class UEditorControl:
 
 if __name__ == '__main__':
     options = webdriver.ChromeOptions()
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--ignore-ssl-errors')
     options.add_argument("start-maximized")
+
     try:
-        driver = webdriver.Chrome(options=options)
-    except sce.SessionNotCreatedException:
-        print("Please download newer version of ChromeDriver!")
+        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    except sce.SessionNotCreatedException as error:
+        print(error)
+        os.system("pause")
+    sleep(1)
 
     driver.get("https://coderliguoqing.github.io/ueditor-web/dist/#/ueditor")
     sleep(3)
     UE = UEditorControl(driver)
     try:
-        UE.add_follow_header()
+        UE.add_daily_news()
     finally:
         os.system("pause")
         UE.driver.quit()
