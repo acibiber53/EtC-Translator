@@ -258,7 +258,6 @@ class EtcTranslatorForAll:
                 print(error)
                 print("It happened when clicking next news")
 
-        os.system("pause")
         sg.popup("Everything is uploaded to Wechat!")
         self.wc.close_browser()
 
