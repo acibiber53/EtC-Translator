@@ -221,10 +221,26 @@ class Wechat:
         self.ueditor.add_daily_news(img_url, text)
 
     def open_next_news(self):
+        """
+            It opens the next content page in the main Wechat editor. Hovering is required to open the "next content"
+            button.
+            Resources:
+            https://www.geeksforgeeks.org/action-chains-in-selenium-python/
+        """
+
         element_to_hover_over = self.driver.find_element_by_id("js_add_appmsg")
-        hover = ActionChains(self.driver).move_to_element(element_to_hover_over)
-        hover.perform()
-        self.driver.find_element_by_xpath("//li[@title='写新图文']/a").click()
+        hover_action = ActionChains(self.driver).move_to_element(element_to_hover_over)
+        hover_action.perform()
+        print("Hovered over")
+        sleep(3)
+        element_to_click = self.driver.find_element_by_xpath("//li[@title='写新图文']/a")
+        click_action = ActionChains(self.driver).click(element_to_click)
+        click_action.perform()
+        print("Clicked")
+
+    def save(self):
+        save_element = self.driver.find_element_by_id("js_submit")
+        save_element.click()
 
     def print_links(self):
         filename = "weekly_news_info.xlsx"

@@ -52,6 +52,7 @@ class EtcTranslatorForAll:
         # Uploading variables
         self.upload_news_list = list()
         self.wc = None
+        self.number_of_news_to_upload = 0
 
     @staticmethod
     def htm_to_urllist(doc_name):
@@ -233,24 +234,33 @@ class EtcTranslatorForAll:
             doc_id = self.gdapi.doc_id_from_url(news_url)
             text = self.gdapi.get_a_documents_content(doc_id) # text is a list
             self.upload_news_list.append(text)
+        self.number_of_news_to_upload = len(self.upload_news_list)
 
     def upload_news(self):
         self.wc.start_the_system()
         self.wc.enter_to_wechat()
         self.wc.open_text_editor_from_home()
-        i = 0
-        for news in self.upload_news_list:
-            if i == 1:
-                break
+        for index, news in enumerate(self.upload_news_list):
             try:
                 self.wc.daily_news_adder(news[0], news[-1], "", news[1:-1])
+                pass
             except Exception as error:
                 print(error)
                 print("it happened around daily news")
-            i += 1
-            # self.wc.open_next_news()
+            self.wc.save()
+            time.sleep(3)
 
-        # TODO Do things with window in the meantime
+            if index == self.number_of_news_to_upload-1:
+                break
+            try:
+                self.wc.open_next_news()
+            except Exception as error:
+                print(error)
+                print("It happened when clicking next news")
+
+        os.system("pause")
+        sg.popup("Everything is uploaded to Wechat!")
+        self.wc.close_browser()
 
     def main_loop(self):
         while True:
