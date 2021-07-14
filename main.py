@@ -25,6 +25,8 @@ from wechat import Wechat
 import time
 import os
 import PySimpleGUI as sg
+import re
+from newsapi_controller import NewsAPIController
 import threading
 
 
@@ -39,8 +41,13 @@ class EtcTranslatorForAll:
         # GUI variables
         self.main_window_name = "EtC Translator for all"
 
+        # News selection variables
+        self.nac = NewsAPIController()
+        self.daily_news_selection_list = self.nac.get_eveything_turkey()
+
         # Layouts needed
         self.welcome_layout = \
+            self.news_selection_layout = \
             self.translation_layout_before = \
             self.translation_layout_during = \
             self.working_window_layout = \
@@ -108,7 +115,16 @@ class EtcTranslatorForAll:
             ]
         ]
 
-        # TODO News Feed Layouts
+        self.news_selection_layout = [*title_maker("Translator"),
+                                      [sg.Text("News list for selection")],
+                                      [sg.Listbox(
+                                          values=[elem[2] for elem in self.daily_news_selection_list],
+                                          select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                                          size=(100, 15),
+                                          enable_events=True,
+                                          key="-NEWS SELECTION LIST-"
+                                      )],
+                                      [sg.Button("Save", key="-SELECTION COMPLETE-")]]
 
         # Translation Layout Before
         self.translation_layout_before = [*title_maker("Translator"),
@@ -156,6 +172,8 @@ class EtcTranslatorForAll:
                 sg.Column(layout=sidebar_maker(), size=(180, 540)),
                 sg.VSeparator(),
                 sg.Column(layout=self.welcome_layout, size=(580, 540), key='-WELCOME-'),
+                sg.Column(layout=self.news_selection_layout, size=(580, 540),
+                          key='-NEWS SELECTION-', visible=False),
                 sg.Column(layout=self.translation_layout_before, size=(580, 540),
                           key='-TRANSLATOR BEFORE-', visible=False),
                 sg.Column(layout=self.translation_layout_during, size=(580, 540),
@@ -237,13 +255,26 @@ class EtcTranslatorForAll:
         self.number_of_news_to_upload = len(self.upload_news_list)
 
     def upload_news(self):
+        def make_abstract(source):
+            temp = "\n".join(source[1:3])
+            # remove names in the parantheses
+            # Source: https://stackoverflow.com/questions/640001/how-can-i-remove-text-within-parentheses-with-a-regex
+            re.sub(r'\([^)]*\)', '', temp)
+            temp = temp[:120]
+            return temp
+
         self.wc.start_the_system()
         self.wc.enter_to_wechat()
         self.wc.open_text_editor_from_home()
         for index, news in enumerate(self.upload_news_list):
             try:
-                self.wc.daily_news_adder(news[0], news[-1], "", news[1:-1])
-                pass
+
+                abstract = make_abstract(news)
+                self.wc.daily_news_adder(news[0],
+                                         news[-1],
+                                         "",
+                                         news[1:-1],
+                                         abstract)  # Title, news_url, image_url, content, abstract
             except Exception as error:
                 print(error)
                 print("it happened around daily news")
@@ -261,13 +292,31 @@ class EtcTranslatorForAll:
         sg.popup("Everything is uploaded to Wechat!")
         self.wc.close_browser()
 
+    def selected_news_listing(self, nlist):
+        selected_news = list()
+        for news in nlist:
+            for elem in self.daily_news_selection_list:
+                if news in elem:
+                    selected_news.append(elem)
+                    break
+        self.url_list = [elem[4] for elem in selected_news]
+        self.url_title_list = [elem[2] for elem in selected_news]
+
     def main_loop(self):
         while True:
             event, values = self.window.read()
             print(event, values)
             if event in (None, '-EXIT-'):
                 break
+            if event == '-NEWS FEED SBB-':
+                self.change_layout("-NEWS SELECTION-")
+
+            if event == "-SELECTION COMPLETE-":
+                news_selected = values['-NEWS SELECTION LIST-']
+                self.selected_news_listing(news_selected)
+
             if event == '-TRANSLATOR SBB-':
+                self.window["-NEWS LIST-"].Update(values=self.url_title_list)
                 self.change_layout("-TRANSLATOR BEFORE-")
 
             if event == "-TRANSLATE BUTTON-":

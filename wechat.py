@@ -213,12 +213,14 @@ class Wechat:
         self.ueditor.add_before_weeklies_title()
         self.ueditor.add_end_qr()
 
-    def daily_news_adder(self, title="", url="", img_url="", text="", author="实时土耳其"):
+    def daily_news_adder(self, title="", url="", img_url="", text="", abstract="", author="实时土耳其"):
         title_element = self.driver.find_element_by_xpath("//input[@id='title']")
         title_element.send_keys(title)
         author_element = self.driver.find_element_by_xpath("//input[@id='author']")
         author_element.send_keys(author)
         self.ueditor.add_daily_news(img_url, text)
+        abstract_element = self.driver.find_element_by_id("js_description")
+        abstract_element.send_keys(abstract)
 
     def open_next_news(self):
         """
