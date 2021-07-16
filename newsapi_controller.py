@@ -36,10 +36,11 @@ class NewsAPIController:
         """
         if datetime.today().isoweekday() == 1:  # https://stackoverflow.com/questions/9847213/how-do-i-get-the-day-of-week-given-a-date
             days = 3
-        response = self.api.get_everything(q="turkey",
+        response = self.api.get_everything(qintitle="turkey OR erdogan",
                                            from_param=datetime.today() - timedelta(days),
                                            page_size=100,
-                                           sort_by="relevancy")
+                                           sort_by="relevancy",
+                                           language="en")
         # https://stackoverflow.com/questions/30483977/python-get-yesterdays-date-as-a-string-in-yyyy-mm-dd-format
         news = response.get("articles")
         self.daily_news = [list(article.values()) for article in news]
@@ -49,4 +50,6 @@ class NewsAPIController:
 if __name__ == '__main__':
     nac = NewsAPIController()
     # nac.get_sources()
-    print(nac.get_eveything_turkey())
+    for elem in nac.get_eveything_turkey():
+        print(elem[2])
+    # print(nac.api.get_everything(domains="trtworld.com"))
