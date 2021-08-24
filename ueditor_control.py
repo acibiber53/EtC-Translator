@@ -119,11 +119,14 @@ class UEditorControl:
         self.add_follow_header()
         self.add_blank_line()
         self.add_an_image(img_url)
+        sleep(0.5)
         for par in text:
             self.add_blank_line()
             self.add_a_paragraph(par)
+            sleep(0.1)
         self.add_blank_line()
         self.add_end_qr()
+        sleep(0.5)
 
     @switcher
     def add_before_weeklies_title(self):

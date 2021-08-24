@@ -44,6 +44,9 @@ class EtcTranslatorForAll:
         # News selection variables
         self.nac = NewsAPIController()
         self.daily_news_selection_list = self.nac.get_eveything_turkey()
+        # Format of this list:
+        # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
+        self.table_data = self.table_data_maker(self.daily_news_selection_list)
 
         # Layouts needed
         self.welcome_layout = \
@@ -60,6 +63,13 @@ class EtcTranslatorForAll:
         self.upload_news_list = list()
         self.wc = None
         self.number_of_news_to_upload = 0
+
+    def table_data_maker(self, news_list):
+        #putting titles and sources into one table
+        sources = [elem[0].get('name') for elem in self.daily_news_selection_list]
+        titles = [elem[2] for elem in self.daily_news_selection_list]
+        table_data = [[title, source] for (title, source) in zip(titles, sources)]
+        return table_data
 
     @staticmethod
     def htm_to_urllist(doc_name):
@@ -117,12 +127,18 @@ class EtcTranslatorForAll:
 
         self.news_selection_layout = [*title_maker("Translator"),
                                       [sg.Text("News list for selection")],
-                                      [sg.Listbox(
-                                          values=[elem[2] for elem in self.daily_news_selection_list],
-                                          select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-                                          size=(100, 15),
+                                      [sg.Table(
+                                          values=self.table_data,
+                                          headings=["Title", "Source"],
+                                          justification='left',
+                                          #vertical_scroll_only=True,
                                           enable_events=True,
-                                          key="-NEWS SELECTION LIST-"
+                                          num_rows=15,
+                                          #def_col_width=50,
+                                          # auto_size_columns=True,
+                                          col_widths=[100, 15],
+                                          select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                                          key="-NEWS SELECTION TABLE-"
                                       )],
                                       [sg.Button("Save", key="-SELECTION COMPLETE-")]]
 
@@ -157,7 +173,7 @@ class EtcTranslatorForAll:
         # Uploading Layout
         self.upload_layout = [*title_maker("Uploader"),
                               [sg.Text("News to upload:")],
-                              [sg.Multiline(default_text="News titles are coming from 在上传",
+                              [sg.Multiline(default_text="News titles for today:\n",
                                             size=(80, 10),
                                             key="-UPLOAD INFO-",
                                             write_only=True,
@@ -260,6 +276,7 @@ class EtcTranslatorForAll:
             # remove names in the parantheses
             # Source: https://stackoverflow.com/questions/640001/how-can-i-remove-text-within-parentheses-with-a-regex
             re.sub(r'\([^)]*\)', '', temp)
+            # re.sub(r'\（[^)]*\）', '', temp) Not working for Chinese characters
             temp = temp[:120]
             return temp
 
@@ -294,9 +311,10 @@ class EtcTranslatorForAll:
 
     def selected_news_listing(self, nlist):
         selected_news = list()
-        for news in nlist:
+        for news_index in nlist:
+            news = self.table_data[news_index]
             for elem in self.daily_news_selection_list:
-                if news in elem:
+                if news[0] in elem:
                     selected_news.append(elem)
                     break
         self.url_list = [elem[4] for elem in selected_news]
@@ -312,7 +330,7 @@ class EtcTranslatorForAll:
                 self.change_layout("-NEWS SELECTION-")
 
             if event == "-SELECTION COMPLETE-":
-                news_selected = values['-NEWS SELECTION LIST-']
+                news_selected = values['-NEWS SELECTION TABLE-']
                 self.selected_news_listing(news_selected)
 
             if event == '-TRANSLATOR SBB-':
@@ -331,19 +349,24 @@ class EtcTranslatorForAll:
             if event == "-UPLOADER SBB-":
                 self.change_layout("-UPLOADER PAGE-")
                 self.print = self.print_set("-UPLOAD INFO-")
-                if not self.upload_news_list:
-                    self.get_news_from_trello()
-                self.print(self.upload_news_list)
+
+                self.get_news_from_trello()
+                for elem in self.upload_news_list:
+                    self.print(elem[0])
 
             if event == "-UPLOAD BUTTON-":
                 # self.change_layout("-UPLOAD DURING-")
-                self.wc = Wechat()
-                try:
-                    self.upload_news()
-                except Exception as error:
-                    print(error)
-                    self.wc.close_browser()
+                if values.get('-WECHAT UPLOAD-'):
+                    self.wc = Wechat()
+                    try:
+                        self.upload_news()
+                    except Exception as error:
+                        print(error)
+                        self.wc.close_browser()
 
+                if values.get('-WORDPRESS UPLOAD-'):
+                    #do wordpress uploading
+                    pass
         self.window.close()
 
     def start_the_program(self):

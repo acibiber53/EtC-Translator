@@ -15,6 +15,21 @@ import os
 
 
 class Wechat:
+    """
+    Source for decorators with arguments:
+    https://stackoverflow.com/questions/5929107/decorators-with-parameters?noredirect=1&lq=1
+    """
+    def sleeper(argument):
+        def decorator(function):
+            def wrapper(*args, **kwargs):
+                result = function(*args, **kwargs)
+                sleep(argument)
+                return result
+
+            return wrapper
+
+        return decorator
+
     def __init__(self):
         self.driver = None
         self.main_handle = None
@@ -53,6 +68,7 @@ class Wechat:
         return one_week_ago + ' - ' + yesterday
 
     @staticmethod
+    @sleeper(1)
     def open_browser():
         """
         This method opens a Chrome webdriver
@@ -62,11 +78,9 @@ class Wechat:
         options = webdriver.ChromeOptions()
         options.add_argument("start-maximized")
         driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-
-        sleep(1)
-
         return driver
 
+    @sleeper(2)
     def open_submit(self):
         # Sometimes the website opens QR login, this is to change it into username-password login
         try:
@@ -79,8 +93,8 @@ class Wechat:
                     )
         except sce.NoSuchElementException:
             print("Maybe page is not open yet?")
-        sleep(2)
 
+    @sleeper(2)
     def enter_to_wechat(self):
         """
         This method reads the username and password from a userpass.txt file and opens related wechat account. After
@@ -113,6 +127,7 @@ class Wechat:
         self.is_logged_in = True
         print("QR Code Scanned!!!")
 
+    @sleeper(1)
     def get_news_links(self):
         if self.sys_start_check():
             return
@@ -134,6 +149,7 @@ class Wechat:
 
         self.news_info = pd.DataFrame(all_news, columns=["ID", "标题", "链接"])
 
+    @sleeper(1)
     def title_image_text_extract(self):
         def abstract_preparer(pd_data):
             return ['\n'.join(elem.split('\n')[0:2]) for elem in pd_data]
@@ -182,6 +198,7 @@ class Wechat:
         self.news_info["摘要"] = abstract_preparer(self.news_info["正文"])
         self.print_links()
 
+    @sleeper(3)
     def open_text_editor_from_home(self):
         if self.sys_start_check():
             return
@@ -201,10 +218,11 @@ class Wechat:
         self.driver.switch_to.window(self.text_editor_handle)
         wait_elem = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.ID, "js_plugins_list")))
-        sleep(3)
+
         self.ueditor = UEditorControl(self.driver)
         print("Text Editor fully opened!")
 
+    @sleeper(1)
     def add_weekly_news(self):
         self.ueditor.add_follow_header()
         self.ueditor.add_click_title_notice()
@@ -213,15 +231,29 @@ class Wechat:
         self.ueditor.add_before_weeklies_title()
         self.ueditor.add_end_qr()
 
+    @sleeper(1)
     def daily_news_adder(self, title="", url="", img_url="", text="", abstract="", author="实时土耳其"):
-        title_element = self.driver.find_element_by_xpath("//input[@id='title']")
-        title_element.send_keys(title)
-        author_element = self.driver.find_element_by_xpath("//input[@id='author']")
-        author_element.send_keys(author)
+        try:
+            title_element = self.driver.find_element_by_xpath("//textarea[@id='title']")
+            title_element.send_keys(title)
+        except Exception as error:
+            print(error)
+            print("Title place couldn't been found!")
+        try:
+            author_element = self.driver.find_element_by_xpath("//input[@id='author']")
+            author_element.send_keys(author)
+        except Exception as error:
+            print(error)
+            print("Author place couldn't been found!")
         self.ueditor.add_daily_news(img_url, text)
-        abstract_element = self.driver.find_element_by_id("js_description")
-        abstract_element.send_keys(abstract)
+        try:
+            abstract_element = self.driver.find_element_by_id("js_description")
+            abstract_element.send_keys(abstract)
+        except Exception as error:
+            print(error)
+            print("Abstract element couldn't been found!")
 
+    @sleeper(1)
     def open_next_news(self):
         """
             It opens the next content page in the main Wechat editor. Hovering is required to open the "next content"
@@ -234,22 +266,25 @@ class Wechat:
         hover_action = ActionChains(self.driver).move_to_element(element_to_hover_over)
         hover_action.perform()
         print("Hovered over")
-        sleep(3)
+        sleep(1)
         element_to_click = self.driver.find_element_by_xpath("//li[@title='写新图文']/a")
         click_action = ActionChains(self.driver).click(element_to_click)
         click_action.perform()
         print("Clicked")
 
+    @sleeper(1)
     def save(self):
         save_element = self.driver.find_element_by_id("js_submit")
         save_element.click()
 
+    @sleeper(1)
     def print_links(self):
         filename = "weekly_news_info.xlsx"
         self.news_info.to_excel(filename, index=False, sheet_name=self.time_tag)
         print(f"All the data printed into {filename}")
         self.log_news()
 
+    @sleeper(1)
     def log_news(self):
         """
             This function logs every weeks news into new sheet at a document called historical_news_data.xlsx
@@ -265,6 +300,7 @@ class Wechat:
             writer.save()
         print("Long term data recording completed")
 
+    @sleeper(1)
     def read_links(self, pathe="weekly_news_info.xlsx"):
         if os.path.exists(pathe):
             self.news_info = pd.read_excel(pathe)
