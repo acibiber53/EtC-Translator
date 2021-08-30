@@ -10,6 +10,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from ueditor_control import UEditorControl
 from webdriver_manager.chrome import ChromeDriverManager
+from credentials import wechat_username, wechat_password
 import re
 import os
 
@@ -97,19 +98,15 @@ class Wechat:
     @sleeper(2)
     def enter_to_wechat(self):
         """
-        This method reads the username and password from a userpass.txt file and opens related wechat account. After
+        This method enters the username and password and opens related wechat account. After
         entering username and password, it also waits one minute for user to scan QR code.
         :return:
         """
         if self.sys_start_check():
             return
 
-        with open("Creds/userpass.txt") as f:
-            name = f.readline().strip()
-            passw = f.readline().strip()
-
-        self.driver.find_element_by_name("account").send_keys(name)
-        self.driver.find_element_by_name("password").send_keys(passw)
+        self.driver.find_element_by_name("account").send_keys(wechat_username)
+        self.driver.find_element_by_name("password").send_keys(wechat_password)
 
         self.driver.find_element_by_link_text("登录").click()
 

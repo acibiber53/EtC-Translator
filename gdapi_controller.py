@@ -14,6 +14,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from credentials import google_folder_id
 import trello_controller
 
 # If modifying these scopes, delete the file token.pickle.
@@ -90,8 +91,7 @@ class GoogleDriveAPIController:
 
         """
         if not self.output_folder_id:
-            with open("Creds/folder_id.txt", "r") as text:
-                self.output_folder_id = text.readline().strip()
+            self.output_folder_id = google_folder_id
 
         if not folder_id:
             folder_id = self.output_folder_id

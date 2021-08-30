@@ -1,7 +1,7 @@
 """
 How to create exe file from this script
 On terminal write this.
-pyinstaller main.py -n EtC-translator-v0.98 --onefile --distpath EtC-translator-for-all-v0.98 --add-data "venv/Lib/site-packages/google_api_python_client-1.12.8.dist-info;google_api_python_client-1.12.8.dist-info"
+pyinstaller main.py -n EtC-translator-v0.99 --onefile --distpath EtC-translator-for-all-v0.99 --add-data "venv/Lib/site-packages/google_api_python_client-1.12.8.dist-info;google_api_python_client-1.12.8.dist-info"
 pyinstaller should be installed beforehand. It is the main executable maker.
 main.py is the entrance point for the project.
 -n is for name
@@ -408,5 +408,6 @@ class EtcTranslatorForAll:
 
 
 if __name__ == '__main__':
+    # TODO File selection module should be added to the program, according to that UI should be reconfigured
     EtC = EtcTranslatorForAll("C:/Users/acibi/Downloads/exported-bookmarks.html")
     EtC.start_the_program()

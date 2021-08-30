@@ -1,28 +1,17 @@
 import requests
 from datetime import datetime, timedelta
 import json
+from credentials import trello_key, trello_token, trello_board_id
 
 
 class TrelloController:
     def __init__(self, target_list_name='准备中'):
-        self.key, self.token = self.get_credentials()
-        self.id_board = self.get_board_id()
+        self.key = trello_key
+        self.token = trello_token
+        self.id_board = trello_board_id
         self.all_lists = self.get_all_lists()
         self.target_list = self.get_target_list(target_list_name)
         self.attachment_list = list()
-
-    @staticmethod
-    def get_board_id():
-        with open("Creds/trello_board_id.txt", "r") as file:
-            board_id = file.readline().strip()
-        return board_id
-
-    @staticmethod
-    def get_credentials():
-        with open("Creds/trello_creds.txt", "r") as file:
-            key = file.readline().strip()
-            token = file.readline().strip()
-        return key, token
 
     def get_all_lists(self):
         url = f"https://api.trello.com/1/boards/{self.id_board}/lists"

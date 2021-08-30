@@ -1,13 +1,12 @@
 from newsapi import NewsApiClient
 from datetime import datetime, timedelta
+from credentials import newsapi_key
 import pandas as pd
 
 
 class NewsAPIController:
     def __init__(self):
-        with open("Creds/newsapi_key.txt") as f:
-            self.api_key = f.readline().strip()
-        self.api = NewsApiClient(api_key=self.api_key)
+        self.api = NewsApiClient(api_key=newsapi_key)
         self.headers = ['source', 'author', 'title', 'description', 'url', 'urlToImage', 'publishedAt', 'content']
         self.daily_news = None
 

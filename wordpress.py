@@ -6,21 +6,18 @@ Sources:
 """
 import requests
 import json
+from credentials import wordpress_username, wordpress_password, wordpress_post_url
 import base64
 
 
 class WordpressController:
     def __init__(self):
-        with open("Creds/wordpress_url.txt") as f:
-            self.posts_url = f.readline().strip()
+        self.posts_url = wordpress_post_url
         self.header = self.make_header()
 
-    def make_header(self):
-        with open("Creds/wordpress_username_app_pass.txt") as f:
-            user = f.readline().strip()
-            password = f.readline().strip()
-
-        credentials = user + ':' + password
+    @staticmethod
+    def make_header():
+        credentials = wordpress_username + ':' + wordpress_password
 
         token = base64.b64encode(credentials.encode())
 
@@ -29,7 +26,7 @@ class WordpressController:
 
     def fetch_posts(self, fields=["id", "status", "type", "link", "title", "content", "author"], get_eveything=False):
         """
-        This is to fetch posts from the website. fields
+        This is to fetch posts from the website.
 
         :param fields: All the information about a post that we can ask from the API. It comes as list of strings, turns
                         into one long string joined with commas.
