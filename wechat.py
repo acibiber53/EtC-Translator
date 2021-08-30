@@ -230,6 +230,7 @@ class Wechat:
             self.ueditor.add_one_news_for_weekly(row[0], row[1], row[2], ''.join(row[3].split()))
         self.ueditor.add_before_weeklies_title()
         self.ueditor.add_end_qr()
+        self.save()
 
     @sleeper(1)
     def daily_news_adder(self, title="", url="", img_url="", text="", abstract="", author="实时土耳其"):
@@ -272,7 +273,7 @@ class Wechat:
         click_action.perform()
         print("Clicked")
 
-    @sleeper(1)
+    @sleeper(2)
     def save(self):
         save_element = self.driver.find_element_by_id("js_submit")
         save_element.click()

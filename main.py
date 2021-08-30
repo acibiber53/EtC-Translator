@@ -1,7 +1,7 @@
 """
 How to create exe file from this script
 On terminal write this.
-pyinstaller main.py -n EtC-translator-v0.97 --onefile --distpath EtC-translator-for-all-v0.97 --add-data venv/Lib/site-packages/google_api_python_client-1.12.8.dist-info;google_api_python_client-1.12.8.dist-info
+pyinstaller main.py -n EtC-translator-v0.98 --onefile --distpath EtC-translator-for-all-v0.98 --add-data "venv/Lib/site-packages/google_api_python_client-1.12.8.dist-info;google_api_python_client-1.12.8.dist-info"
 pyinstaller should be installed beforehand. It is the main executable maker.
 main.py is the entrance point for the project.
 -n is for name
@@ -53,6 +53,7 @@ class EtcTranslatorForAll:
             self.news_selection_layout = \
             self.translation_layout_before = \
             self.translation_layout_during = \
+            self.sunday_collector_layout = \
             self.working_window_layout = \
             self.upload_layout = None
 
@@ -168,13 +169,18 @@ class EtcTranslatorForAll:
 
         # TODO Translation Layout After
 
-        # TODO Sunday Collector Layout
+        # Sunday Collector Layout
+        self.sunday_collector_layout = [*title_maker("Sunday Collector"),
+                                        [sg.Text("Select the mode for sunday collector to work:")],
+                                        [sg.Radio("Just weekly news", "RADIO1", key="-JUST WEEKLY-", default=True),
+                                         sg.Radio("With daily news", "RADIO1", key="-WITH DAILY-")],
+                                        [sg.Button("Start Fetching", key="-SCOL FETCH BUTTON-")]
+        ]
 
         # Uploading Layout
         self.upload_layout = [*title_maker("Uploader"),
-                              [sg.Text("News to upload:")],
-                              [sg.Multiline(default_text="News titles for today:\n",
-                                            size=(80, 10),
+                              [sg.Text("News Titles to upload:")],
+                              [sg.Multiline(size=(80, 10),
                                             key="-UPLOAD INFO-",
                                             write_only=True,
                                             auto_refresh=True)],
@@ -194,6 +200,8 @@ class EtcTranslatorForAll:
                           key='-TRANSLATOR BEFORE-', visible=False),
                 sg.Column(layout=self.translation_layout_during, size=(580, 540),
                           key='-TRANSLATOR DURING-', visible=False),
+                sg.Column(layout=self.sunday_collector_layout, size=(580, 540),
+                          key='-SUNDAY COLLECTOR-', visible=False),
                 sg.Column(layout=self.upload_layout, size=(580, 540),
                           key='-UPLOADER PAGE-', visible=False)
             ]
@@ -320,6 +328,15 @@ class EtcTranslatorForAll:
         self.url_list = [elem[4] for elem in selected_news]
         self.url_title_list = [elem[2] for elem in selected_news]
 
+    def sunday_collect_and_upload(self):
+        self.wc.start_the_system()
+        self.wc.enter_to_wechat()
+        self.wc.get_news_links()
+        self.wc.title_image_text_extract()
+        self.wc.open_text_editor_from_home()
+        self.wc.add_weekly_news()
+        sg.Popup("Sunday Collector uploaded all news!")
+
     def main_loop(self):
         while True:
             event, values = self.window.read()
@@ -346,6 +363,20 @@ class EtcTranslatorForAll:
                 # threading.Thread(target=translate_news, args=(window, urlinfo[1],), daemon=True).start()
                 self.translate_news()
 
+            if event == '-SUNDAY COL SBB-':
+                self.change_layout("-SUNDAY COLLECTOR-")
+
+            if event == "-SCOL FETCH BUTTON-":
+                self.wc = Wechat()
+                if values.get("-JUST WEEKLY-"):
+                    self.sunday_collect_and_upload()
+                    pass
+                else:
+                    # Do all together
+                    pass
+
+                self.wc.close_browser()
+
             if event == "-UPLOADER SBB-":
                 self.change_layout("-UPLOADER PAGE-")
                 self.print = self.print_set("-UPLOAD INFO-")
@@ -362,10 +393,11 @@ class EtcTranslatorForAll:
                         self.upload_news()
                     except Exception as error:
                         print(error)
+                    finally:
                         self.wc.close_browser()
 
                 if values.get('-WORDPRESS UPLOAD-'):
-                    #do wordpress uploading
+                    # TODO do wordpress uploading
                     pass
         self.window.close()
 
