@@ -10,6 +10,7 @@ How to install google_drive_api
 from __future__ import print_function
 import pickle
 import os.path
+import sys
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -29,12 +30,25 @@ class GoogleDriveAPIController:
         self.output_folder_id = None
         self.start_the_api()
 
+    def resource_path(self, relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller
+            From: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+        """
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception as error:
+            print(error)
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+
     def credential_authorization(self):
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('Creds/token.pickle'):
-            with open('Creds/token.pickle', 'rb') as token:
+        if os.path.exists(self.resource_path('Creds/token.pickle')):
+            with open(self.resource_path('Creds/token.pickle'), 'rb') as token:
                 self.creds = pickle.load(token)
 
         # If there are no (valid) credentials available, let the user log in.
@@ -43,10 +57,10 @@ class GoogleDriveAPIController:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'Creds/credentials.json', SCOPES)
+                    self.resource_path('Creds/credentials.json'), SCOPES)
                 self.creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('Creds/token.pickle', 'wb') as token:
+            with open(self.resource_path('Creds/token.pickle'), 'wb') as token:
                 pickle.dump(self.creds, token)
 
     def service_creation(self):
