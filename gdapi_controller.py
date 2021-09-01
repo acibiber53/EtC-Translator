@@ -10,6 +10,7 @@ How to install google_drive_api
 from __future__ import print_function
 import pickle
 import os.path
+import re
 import sys
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -125,6 +126,32 @@ class GoogleDriveAPIController:
                                                  fields='id').execute()
         file_link = "https://docs.google.com/document/d/" + file.get('id')
         return name, file_link
+
+    def Etc_to_gdrive(self, version_name, folder_name):
+        g_folder_name = re.sub("-", " ", folder_name)
+        file_metadata = {
+            'name': g_folder_name,
+            'mimeType': 'application/vnd.google-apps.folder',
+            'parents': ['1dJDXKun7DyPcs_dICaEoGvfZbLqKZv39']
+        }
+        file = self.drive_service.files().create(body=file_metadata,
+                                                 fields='id').execute()
+        folder_id = file.get('id')
+        print(f"Folder ID is this:{folder_id}")
+
+        file_metadata = {
+            'name': version_name+'.exe',
+            'parents': [folder_id]
+        }
+        media = MediaFileUpload(f'{folder_name}/{version_name}.exe',
+                                resumable=True)
+        file = self.drive_service.files().create(body=file_metadata,
+                                            media_body=media,
+                                            fields='id').execute()
+
+        file_id = file.get('id')
+        print(f"File ID is this:{file_id}")
+
 
     def folder_search(self, query_type="mimeType='application/vnd.google-apps.folder'"):
         """

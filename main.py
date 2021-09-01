@@ -88,7 +88,7 @@ class EtcTranslatorForAll:
             print(f"We couldn't find your document, please make sure to have a document named {doc_name}. "
                   f"Add the required htm file and try again!")
             os.system("pause")
-            return -1
+            return -1, -1
 
         urllist = list()
         url_title_list = list()
@@ -408,6 +408,5 @@ class EtcTranslatorForAll:
 
 
 if __name__ == '__main__':
-    # TODO File selection module should be added to the program, according to that UI should be reconfigured
     EtC = EtcTranslatorForAll(os.path.expanduser("~\Downloads\exported-bookmarks.html"))
     EtC.start_the_program()
