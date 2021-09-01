@@ -409,5 +409,5 @@ class EtcTranslatorForAll:
 
 if __name__ == '__main__':
     # TODO File selection module should be added to the program, according to that UI should be reconfigured
-    EtC = EtcTranslatorForAll("C:/Users/acibi/Downloads/exported-bookmarks.html")
+    EtC = EtcTranslatorForAll(os.path.expanduser("~\Downloads\exported-bookmarks.html"))
     EtC.start_the_program()
