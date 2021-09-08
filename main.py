@@ -43,10 +43,14 @@ class EtcTranslatorForAll:
 
         # News selection variables
         self.nac = NewsAPIController()
-        self.daily_news_selection_list = self.nac.get_eveything_turkey()
-        # Format of this list:
-        # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
-        self.table_data = self.table_data_maker(self.daily_news_selection_list)
+        try:
+            self.daily_news_selection_list = self.nac.get_eveything_turkey()
+            # Format of this list:
+            # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
+            self.table_data = self.table_data_maker(self.daily_news_selection_list)
+        except Exception as error:
+            sg.PopupError(f"{error}\nThere was a problem with the NewsAPI, check your credentials")
+            self.table_data = list()
 
         # Layouts needed
         self.welcome_layout = \
