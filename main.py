@@ -154,7 +154,9 @@ class EtcTranslatorForAll:
                                               values=self.url_title_list, enable_events=True, size=(100, 15),
                                               key="-NEWS LIST-"
                                           )],
-                                          [sg.Text(f"Translation engine being used : {self.translation_engine}")],
+                                          #[sg.Text(f"Translation engine being used : {self.translation_engine}")],
+                                          [sg.Radio("Sogou", "RADIO2", key="-SOGOU-", default=True),
+                                           sg.Radio("Baidu", "RADIO2", key="-BAIDU-")],
                                           [sg.Button("Start Translating", key="-TRANSLATE BUTTON-")]]
 
         # Translation Layout During
@@ -235,11 +237,11 @@ class EtcTranslatorForAll:
         response = self.trel.create_a_card(name=date, desc=daily_card_desc, due='')
         self.print(f"Trello daily news list card created!\nCard Link:{response.get('url')}\n")
 
-    def translate_news(self):
+    def translate_news(self, t_engine):
         if self.url_list == -1:
             return
 
-        self.trs = Translator(self.translation_engine)
+        self.trs = Translator(t_engine)
         self.trel = TrelloController()
         trello_daily_card = list()
 
@@ -365,7 +367,10 @@ class EtcTranslatorForAll:
                 self.print = self.print_set("-NEWS INFO-")
                 self.change_layout("-TRANSLATOR DURING-")
                 # threading.Thread(target=translate_news, args=(window, urlinfo[1],), daemon=True).start()
-                self.translate_news()
+                if values.get("-SOGOU-"):
+                    self.translate_news("sogou")
+                elif values.get("-BAIDU-"):
+                    self.translate_news("baidu")
 
             if event == '-SUNDAY COL SBB-':
                 self.change_layout("-SUNDAY COLLECTOR-")

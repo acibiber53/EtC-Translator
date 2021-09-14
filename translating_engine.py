@@ -10,6 +10,7 @@ import subprocess
 from webdriver_manager.chrome import ChromeDriverManager
 from news import News
 import logging
+from fake_useragent import UserAgent
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -18,9 +19,11 @@ class Translator:
     news_uploaded = list()
 
     def __init__(self, tengine='sogou'):
-        self.driver = self.open_browser()
+        ua = UserAgent()
+        userAgent = ua.random
+        self.driver = self.open_browser(userAgent)
         self.preferred_translation_engine = tengine
-        self.translator = self.open_browser()
+        self.translator = self.open_browser(userAgent)
         self.stinput = None
         self.stoutput = None
         self.translator_settings()
@@ -57,7 +60,7 @@ class Translator:
         return re.sub('-', '.', str(date.today())) + ' - '
 
     @staticmethod
-    def open_browser():
+    def open_browser(userA):
         """
             This method opens a webdriver in a preset options environment. Now it only opens the driver maximized and
             ignores the ssl errors.
@@ -76,33 +79,31 @@ class Translator:
         options.add_argument('--no-sandbox')
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--ignore-ssl-errors')
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
 
-        driver = webdriver.Chrome(options=options)
-
-        # cdp_cmd executions to stop websites from automation detection
-        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-            "source": """
-        # Object.defineProperty(navigator, 'webdriver', {
-        #   get: () => undefined
-        # })
-
-        """
-        })
-        driver.execute_cdp_cmd("Network.enable", {})
-        driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": {"User-Agent": "browser1"}})
+        driver = webdriver.Chrome(options=options)  
+        
         """
         options = webdriver.ChromeOptions()
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--ignore-ssl-errors')
         options.add_argument("start-maximized")
+        options.add_argument(f'user-agent={userA}') # https://stackoverflow.com/questions/49565042/way-to-change-google-chrome-user-agent-in-selenium/49565254#49565254
+        options.add_argument('--disable-blink-features=AutomationControlled') # https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec/53040904#53040904
+
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+
 
         try:
             driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         except sce.SessionNotCreatedException as error:
             print(error)
             os.system("pause")
+        sleep(1)
+
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        # driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": userA})
+        print(driver.execute_script("return navigator.userAgent;"))
         sleep(1)
 
         return driver
