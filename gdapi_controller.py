@@ -20,7 +20,10 @@ from credentials import google_folder_id
 import trello_controller
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/documents.readonly']
+SCOPES = [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/documents.readonly",
+]
 
 
 class GoogleDriveAPIController:
@@ -32,8 +35,8 @@ class GoogleDriveAPIController:
         self.start_the_api()
 
     def resource_path(self, relative_path):
-        """ Get absolute path to resource, works for dev and for PyInstaller
-            From: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+        """Get absolute path to resource, works for dev and for PyInstaller
+        From: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
         """
         try:
             # PyInstaller creates a temp folder and stores path in _MEIPASS
@@ -48,8 +51,8 @@ class GoogleDriveAPIController:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists(self.resource_path('Creds/token.pickle')):
-            with open(self.resource_path('Creds/token.pickle'), 'rb') as token:
+        if os.path.exists(self.resource_path("Creds/token.pickle")):
+            with open(self.resource_path("Creds/token.pickle"), "rb") as token:
                 self.creds = pickle.load(token)
 
         # If there are no (valid) credentials available, let the user log in.
@@ -58,36 +61,39 @@ class GoogleDriveAPIController:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    self.resource_path('Creds/credentials.json'), SCOPES)
+                    self.resource_path("Creds/credentials.json"), SCOPES
+                )
                 self.creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open(self.resource_path('Creds/token.pickle'), 'wb') as token:
+            with open(self.resource_path("Creds/token.pickle"), "wb") as token:
                 pickle.dump(self.creds, token)
 
     def service_creation(self):
-        self.drive_service = build('drive', 'v3', credentials=self.creds)
-        self.docs_service = build('docs', 'v1', credentials=self.creds)
+        self.drive_service = build("drive", "v3", credentials=self.creds)
+        self.docs_service = build("docs", "v1", credentials=self.creds)
 
     def start_the_api(self):
         self.credential_authorization()
         self.service_creation()
 
     def get_first_ten(self):
-        results = self.drive_service.files().list(
-            pageSize=10, fields="nextPageToken, files(id, name)").execute()
-        items = results.get('files', [])
+        results = (
+            self.drive_service.files()
+            .list(pageSize=10, fields="nextPageToken, files(id, name)")
+            .execute()
+        )
+        items = results.get("files", [])
 
         if not items:
-            print('No files found.')
+            print("No files found.")
         else:
-            print('Files:')
+            print("Files:")
             for item in items:
                 print(f"{item['name']} ({item['id']})")
 
-    def docx_to_gdocs_uploader(self,
-                                 name='Test',
-                                 filepath='2020.11.20/Test Document.docx',
-                                 folder_id=None):
+    def docx_to_gdocs_uploader(
+        self, name="Test", filepath="2020.11.20/Test Document.docx", folder_id=None
+    ):
 
         """
             This function uploads a docx file as a Google Docs to the Google Drive.
@@ -112,46 +118,48 @@ class GoogleDriveAPIController:
             folder_id = self.output_folder_id
 
         file_metadata = {
-            'name': name,
-            'mimeType': 'application/vnd.google-apps.document',
-            'parents': [folder_id]
+            "name": name,
+            "mimeType": "application/vnd.google-apps.document",
+            "parents": [folder_id],
         }
 
-        media = MediaFileUpload(filepath,
-                                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                resumable=True)
+        media = MediaFileUpload(
+            filepath,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            resumable=True,
+        )
 
-        file = self.drive_service.files().create(body=file_metadata,
-                                                 media_body=media,
-                                                 fields='id').execute()
-        file_link = "https://docs.google.com/document/d/" + file.get('id')
+        file = (
+            self.drive_service.files()
+            .create(body=file_metadata, media_body=media, fields="id")
+            .execute()
+        )
+        file_link = "https://docs.google.com/document/d/" + file.get("id")
         return name, file_link
 
     def Etc_to_gdrive(self, version_name, folder_name):
         g_folder_name = re.sub("-", " ", folder_name)
         file_metadata = {
-            'name': g_folder_name,
-            'mimeType': 'application/vnd.google-apps.folder',
-            'parents': ['1dJDXKun7DyPcs_dICaEoGvfZbLqKZv39']
+            "name": g_folder_name,
+            "mimeType": "application/vnd.google-apps.folder",
+            "parents": ["1dJDXKun7DyPcs_dICaEoGvfZbLqKZv39"],
         }
-        file = self.drive_service.files().create(body=file_metadata,
-                                                 fields='id').execute()
-        folder_id = file.get('id')
+        file = (
+            self.drive_service.files().create(body=file_metadata, fields="id").execute()
+        )
+        folder_id = file.get("id")
         print(f"Folder ID is this:{folder_id}")
 
-        file_metadata = {
-            'name': version_name+'.exe',
-            'parents': [folder_id]
-        }
-        media = MediaFileUpload(f'{folder_name}/{version_name}.exe',
-                                resumable=True)
-        file = self.drive_service.files().create(body=file_metadata,
-                                            media_body=media,
-                                            fields='id').execute()
+        file_metadata = {"name": version_name + ".exe", "parents": [folder_id]}
+        media = MediaFileUpload(f"{folder_name}/{version_name}.exe", resumable=True)
+        file = (
+            self.drive_service.files()
+            .create(body=file_metadata, media_body=media, fields="id")
+            .execute()
+        )
 
-        file_id = file.get('id')
+        file_id = file.get("id")
         print(f"File ID is this:{file_id}")
-
 
     def folder_search(self, query_type="mimeType='application/vnd.google-apps.folder'"):
         """
@@ -169,14 +177,20 @@ class GoogleDriveAPIController:
         # query_type = "name = 'Test'"
         page_token = None
         while True:
-            response = self.drive_service.files().list(q=query_type,
-                                                       spaces='drive',
-                                                       fields='nextPageToken, files(id, name)',
-                                                       pageToken=page_token).execute()
-            for file in response.get('files', []):
+            response = (
+                self.drive_service.files()
+                .list(
+                    q=query_type,
+                    spaces="drive",
+                    fields="nextPageToken, files(id, name)",
+                    pageToken=page_token,
+                )
+                .execute()
+            )
+            for file in response.get("files", []):
                 # Process change
                 print(f"Found file: {file.get('name')} {file.get('id')}")
-            page_token = response.get('nextPageToken', None)
+            page_token = response.get("nextPageToken", None)
             if page_token is None:
                 break
 
@@ -186,11 +200,11 @@ class GoogleDriveAPIController:
         :param file_id: Enter drive id for the file you want to see the metadafa of.
         :return:
         """
-        file = self.drive_service.files().get(fileId=file_id, fields='*').execute()
+        file = self.drive_service.files().get(fileId=file_id, fields="*").execute()
         print(file)
 
-    def upload_all_in_folder(self, folder_name='2020.11.20'):
-        pathos = folder_name + '\\'
+    def upload_all_in_folder(self, folder_name="2020.11.20"):
+        pathos = folder_name + "\\"
         files = os.listdir(pathos)
         uploaded_files = list()
 
@@ -202,31 +216,31 @@ class GoogleDriveAPIController:
         return uploaded_files
 
     def read_structural_elements(self, elements):
-        """ Copied directly from https://developers.google.com/docs/api/samples/extract-text#python
-            Recurses through a list of Structural Elements to read a document's text where text may be
-            in nested elements.
+        """Copied directly from https://developers.google.com/docs/api/samples/extract-text#python
+        Recurses through a list of Structural Elements to read a document's text where text may be
+        in nested elements.
 
-            Args:
-                elements: a list of Structural Elements.
+        Args:
+            elements: a list of Structural Elements.
         """
-        text = ''
+        text = ""
         for value in elements:
-            if 'paragraph' in value:
-                elements = value.get('paragraph').get('elements')
+            if "paragraph" in value:
+                elements = value.get("paragraph").get("elements")
                 for elem in elements:
                     text += self.read_paragraph_element(elem)
-            elif 'table' in value:
+            elif "table" in value:
                 # The text in table cells are in nested Structural Elements and tables may be
                 # nested.
-                table = value.get('table')
-                for row in table.get('tableRows'):
-                    cells = row.get('tableCells')
+                table = value.get("table")
+                for row in table.get("tableRows"):
+                    cells = row.get("tableCells")
                     for cell in cells:
-                        text += self.read_structural_elements(cell.get('content'))
-            elif 'tableOfContents' in value:
+                        text += self.read_structural_elements(cell.get("content"))
+            elif "tableOfContents" in value:
                 # The text in the TOC is also in a Structural Element.
-                toc = value.get('tableOfContents')
-                text += self.read_structural_elements(toc.get('content'))
+                toc = value.get("tableOfContents")
+                text += self.read_structural_elements(toc.get("content"))
         return text
 
     def get_a_documents_content(self, DOCUMENT_ID):
@@ -237,24 +251,26 @@ class GoogleDriveAPIController:
         :return: list made of contents of the document
         """
         doc = self.docs_service.documents().get(documentId=DOCUMENT_ID).execute()
-        doc_content_raw = doc.get('body').get('content')
+        doc_content_raw = doc.get("body").get("content")
         doc_content_organized = self.read_structural_elements(doc_content_raw)
-        doc_content_cleaned = [elem.strip() for elem in doc_content_organized.split('\n') if elem]
+        doc_content_cleaned = [
+            elem.strip() for elem in doc_content_organized.split("\n") if elem
+        ]
         return doc_content_cleaned
 
     def read_paragraph_element(self, element):
         """Returns the text in the given ParagraphElement.
 
-            Args:
-                element: a ParagraphElement from a Google Doc.
+        Args:
+            element: a ParagraphElement from a Google Doc.
         """
-        text_run = element.get('textRun')
+        text_run = element.get("textRun")
         if not text_run:
-            return ''
-        return text_run.get('content')
+            return ""
+        return text_run.get("content")
 
     def doc_id_from_url(self, url):
-        return url.split('/')[-1]
+        return url.split("/")[-1]
 
 
 def main():
@@ -269,6 +285,5 @@ def main():
     print(gdapi.get_a_documents_content(doc_id))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

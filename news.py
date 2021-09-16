@@ -1,6 +1,7 @@
 import re
 from datetime import date
 
+
 class News:
     def __init__(self, link):
         self.title_english = ""
@@ -15,4 +16,4 @@ class News:
         self.document_path = ""
         self.length_english = 0
         self.length_chinese = 0
-        self.translation_date = re.sub('-', '.', str(date.today()))
+        self.translation_date = re.sub("-", ".", str(date.today()))

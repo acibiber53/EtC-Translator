@@ -20,6 +20,7 @@ class Wechat:
     Source for decorators with arguments:
     https://stackoverflow.com/questions/5929107/decorators-with-parameters?noredirect=1&lq=1
     """
+
     def sleeper(argument):
         def decorator(function):
             def wrapper(*args, **kwargs):
@@ -66,7 +67,7 @@ class Wechat:
         yesterday = date.today() - timedelta(days=1)
         one_week_ago = str(yesterday - timedelta(days=6))
         yesterday = str(yesterday)
-        return one_week_ago + ' - ' + yesterday
+        return one_week_ago + " - " + yesterday
 
     @staticmethod
     @sleeper(1)
@@ -114,7 +115,9 @@ class Wechat:
         # Wait until QR scan
         try:
             wait_elem = WebDriverWait(self.driver, 60).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "weui-desktop-panel__hd"))
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "weui-desktop-panel__hd")
+                )
             )
         except sce.TimeoutException:
             print("You've failed to login in time, try again!")
@@ -149,7 +152,7 @@ class Wechat:
     @sleeper(1)
     def title_image_text_extract(self):
         def abstract_preparer(pd_data):
-            return ['\n'.join(elem.split('\n')[0:2]) for elem in pd_data]
+            return ["\n".join(elem.split("\n")[0:2]) for elem in pd_data]
 
         images = list()
         texts = list()
@@ -203,18 +206,26 @@ class Wechat:
         if self.log_check():
             return
         try:
-            text_editor = self.driver.find_element_by_xpath("//div[@class='new-creation__menu']/div[1]")
+            text_editor = self.driver.find_element_by_xpath(
+                "//div[@class='new-creation__menu']/div[1]"
+            )
         except sce.NoSuchElementException:
             self.driver.get("https://mp.weixin.qq.com/")
             wait_elem = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "weui-desktop-panel__hd")))
-            text_editor = self.driver.find_element_by_xpath("//div[@class='new-creation__menu']/div[1]")
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "weui-desktop-panel__hd")
+                )
+            )
+            text_editor = self.driver.find_element_by_xpath(
+                "//div[@class='new-creation__menu']/div[1]"
+            )
 
         text_editor.click()
         self.text_editor_handle = self.driver.window_handles[-1]
         self.driver.switch_to.window(self.text_editor_handle)
         wait_elem = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.ID, "js_plugins_list")))
+            EC.presence_of_element_located((By.ID, "js_plugins_list"))
+        )
 
         self.ueditor = UEditorControl(self.driver)
         print("Text Editor fully opened!")
@@ -223,14 +234,23 @@ class Wechat:
     def add_weekly_news(self):
         self.ueditor.add_follow_header()
         self.ueditor.add_click_title_notice()
-        for row in zip(self.news_info['标题'], self.news_info['链接'], self.news_info['图片链接'], self.news_info['摘要']):
-            self.ueditor.add_one_news_for_weekly(row[0], row[1], row[2], ''.join(row[3].split()))
+        for row in zip(
+            self.news_info["标题"],
+            self.news_info["链接"],
+            self.news_info["图片链接"],
+            self.news_info["摘要"],
+        ):
+            self.ueditor.add_one_news_for_weekly(
+                row[0], row[1], row[2], "".join(row[3].split())
+            )
         self.ueditor.add_before_weeklies_title()
         self.ueditor.add_end_qr()
         self.save()
 
     @sleeper(1)
-    def daily_news_adder(self, title="", url="", img_url="", text="", abstract="", author="实时土耳其"):
+    def daily_news_adder(
+        self, title="", url="", img_url="", text="", abstract="", author="实时土耳其"
+    ):
         try:
             title_element = self.driver.find_element_by_xpath("//textarea[@id='title']")
             title_element.send_keys(title)
@@ -254,10 +274,10 @@ class Wechat:
     @sleeper(1)
     def open_next_news(self):
         """
-            It opens the next content page in the main Wechat editor. Hovering is required to open the "next content"
-            button.
-            Resources:
-            https://www.geeksforgeeks.org/action-chains-in-selenium-python/
+        It opens the next content page in the main Wechat editor. Hovering is required to open the "next content"
+        button.
+        Resources:
+        https://www.geeksforgeeks.org/action-chains-in-selenium-python/
         """
 
         element_to_hover_over = self.driver.find_element_by_id("js_add_appmsg")
@@ -289,9 +309,9 @@ class Wechat:
 
         :return: None
         """
-        filename = 'historical_news_data.xlsx'
+        filename = "historical_news_data.xlsx"
         book = load_workbook(filename)
-        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+        with pd.ExcelWriter(filename, engine="openpyxl") as writer:
             writer.book = book
             writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
             self.news_info.to_excel(writer, sheet_name=self.time_tag)

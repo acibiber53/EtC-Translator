@@ -16,9 +16,9 @@ class UEditorControl:
 
     def switcher(func):
         """
-            This decorator switches to the ueditor iframe,
-            then does the function,
-            then switches out to the default content.
+        This decorator switches to the ueditor iframe,
+        then does the function,
+        then switches out to the default content.
         """
 
         @functools.wraps(func)
@@ -39,7 +39,9 @@ class UEditorControl:
         if not self.is_initialized:
             self.initialize()
         self.iframe_body = self.driver.find_element_by_tag_name("body")
-        self.driver.execute_script(f"arguments[0].innerHTML += '{html}'", self.iframe_body)
+        self.driver.execute_script(
+            f"arguments[0].innerHTML += '{html}'", self.iframe_body
+        )
 
     @switcher
     def add_blank_line(self):
@@ -52,7 +54,10 @@ class UEditorControl:
         self.inject_the_html(paragraph_html)
 
     @switcher
-    def add_an_image(self, img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg"):
+    def add_an_image(
+        self,
+        img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg",
+    ):
         img_html = f"""<p style="text-align: center">\
                        <img data-s="300,640" data-galleryid="" data-type="jpeg" class="rich_pages" src={img_url} style="" data-ratio="0.6104815864022662" data-w="706" data-imgqrcoded="1">\
                        </p>"""
@@ -92,9 +97,13 @@ class UEditorControl:
         self.inject_the_html(notice_html)
 
     @switcher
-    def add_one_news_for_weekly(self, title="这里是标题", title_url="https://mp.weixin.qq.com/",
-                                img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg",
-                                text="这里写正文吧"):
+    def add_one_news_for_weekly(
+        self,
+        title="这里是标题",
+        title_url="https://mp.weixin.qq.com/",
+        img_url="https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuFPxDeYugXZ4n4sEq95FHMtibw1aE9KgWRcfQibGpyzdJriaY9QXXU7bWXleRyNteYC1E6TjTJu6e5jA/640?wx_fmt=jpeg",
+        text="这里写正文吧",
+    ):
         one_news_for_weekly_html = f"""<section style="margin-top: 10px;white-space: normal;font-size: 16px;text-align: center;box-sizing: border-box;">\
                                      <section style="padding: 10px;display: inline-block;width: 491.292px;vertical-align: top;border-style: solid solid none;border-width: 1px;border-radius: 0px;border-color: rgb(62, 62, 62);box-sizing: border-box;">\
                                      <section style="margin-top: 10px;margin-bottom: 10px;box-sizing: border-box;">\
@@ -115,7 +124,7 @@ class UEditorControl:
                                      </section></section></section></section></section>"""
         self.inject_the_html(one_news_for_weekly_html)
 
-    def add_daily_news(self, img_url="", text=["这里应该有个内容","里面会有一些新闻"]):
+    def add_daily_news(self, img_url="", text=["这里应该有个内容", "里面会有一些新闻"]):
         self.add_follow_header()
         self.add_blank_line()
         self.add_an_image(img_url)
@@ -123,7 +132,7 @@ class UEditorControl:
         for par in text:
             self.add_blank_line()
             self.add_a_paragraph(par)
-            sleep(0.1)
+            sleep(0.5)
         self.add_blank_line()
         self.add_end_qr()
         sleep(0.5)
@@ -189,10 +198,10 @@ class UEditorControl:
         self.inject_the_html(qr_html)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     options = webdriver.ChromeOptions()
-    options.add_argument('--ignore-certificate-errors')
-    options.add_argument('--ignore-ssl-errors')
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--ignore-ssl-errors")
     options.add_argument("start-maximized")
 
     try:
