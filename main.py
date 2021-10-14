@@ -30,12 +30,17 @@ import re
 from newsapi_controller import NewsAPIController
 import threading
 
+DOC_PATH = os.path.expanduser("~\Downloads\exported-bookmarks.html")
+WIDTH = 1366
+HEIGHT = 768
+PADDING = 20
+
 
 class EtcTranslatorForAll:
     def __init__(self, news_link_document_path="news-to-translate.htm"):
         # Translation variables
         self.url_title_list, self.url_list = self.htm_to_urllist(
-            news_link_document_path
+            DOC_PATH
         )
         self.translation_engine = "sogou"
         self.gdapi = GDAPIC()
@@ -221,6 +226,12 @@ class EtcTranslatorForAll:
         # Uploading Layout
         self.upload_layout = [
             *title_maker("Uploader"),
+            [sg.Text("Select upload Medium:")],
+            [sg.Checkbox("Wechat", default=True, key="-WECHAT UPLOAD-")],
+            [sg.Checkbox("WordPress", default=False, key="-WORDPRESS UPLOAD-")],
+            [sg.Text("Selecting only WordPress will get the news from '在上传 - 只WP' list, any other selection will get "
+                     "the news from '在上传'.")],
+            [sg.Button("Show Upload Content", key="-UPLOAD REFRESH-")],
             [sg.Text("News Titles to upload:")],
             [
                 sg.Multiline(
@@ -230,44 +241,46 @@ class EtcTranslatorForAll:
                     auto_refresh=True,
                 )
             ],
-            [sg.Checkbox("Wechat", default=True, key="-WECHAT UPLOAD-")],
-            [sg.Checkbox("WordPress", default=False, key="-WORDPRESS UPLOAD-")],
+
             [sg.Button("Start Uploading", key="-UPLOAD BUTTON-")],
         ]
 
         # Main working window layout
+        SIDEBAR_WIDTH = int(WIDTH/4-PADDING)
+        REST_WIDTH = int(WIDTH/4*3-PADDING)
+        REAL_HEIGHT = int(HEIGHT-3*PADDING)
         self.working_window_layout = [
             [
-                sg.Column(layout=sidebar_maker(), size=(180, 540)),
+                sg.Column(layout=sidebar_maker(), size=(SIDEBAR_WIDTH, REAL_HEIGHT)),
                 sg.VSeparator(),
-                sg.Column(layout=self.welcome_layout, size=(580, 540), key="-WELCOME-"),
+                sg.Column(layout=self.welcome_layout, size=(REST_WIDTH, REAL_HEIGHT), key="-WELCOME-"),
                 sg.Column(
                     layout=self.news_selection_layout,
-                    size=(580, 540),
+                    size=(REST_WIDTH, REAL_HEIGHT),
                     key="-NEWS SELECTION-",
                     visible=False,
                 ),
                 sg.Column(
                     layout=self.translation_layout_before,
-                    size=(580, 540),
+                    size=(REST_WIDTH, REAL_HEIGHT),
                     key="-TRANSLATOR BEFORE-",
                     visible=False,
                 ),
                 sg.Column(
                     layout=self.translation_layout_during,
-                    size=(580, 540),
+                    size=(REST_WIDTH, REAL_HEIGHT),
                     key="-TRANSLATOR DURING-",
                     visible=False,
                 ),
                 sg.Column(
                     layout=self.sunday_collector_layout,
-                    size=(580, 540),
+                    size=(REST_WIDTH, REAL_HEIGHT),
                     key="-SUNDAY COLLECTOR-",
                     visible=False,
                 ),
                 sg.Column(
                     layout=self.upload_layout,
-                    size=(580, 540),
+                    size=(REST_WIDTH, REAL_HEIGHT),
                     key="-UPLOADER PAGE-",
                     visible=False,
                 ),
@@ -353,11 +366,11 @@ class EtcTranslatorForAll:
             self.trs.close_driver()
             sg.popup("All translation job has finished!")
 
-    def get_news_from_trello(self):
+    def get_news_from_trello(self, target_list = "在上传"):
         if self.trel is None:
-            self.trel = TrelloController("在上传")
+            self.trel = TrelloController(target_list)
         else:
-            self.trel.set_target_list("在上传")
+            self.trel.set_target_list(target_list)
         news_urls_to_upload = self.trel.get_all_urls_from_a_lists_attachments()
         news_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
         for news_url in news_urls_to_upload:
@@ -442,6 +455,9 @@ class EtcTranslatorForAll:
                 self.selected_news_listing(news_selected)
 
             if event == "-TRANSLATOR SBB-":
+                self.url_title_list, self.url_list = self.htm_to_urllist(
+                    DOC_PATH
+                )
                 self.window["-NEWS LIST-"].Update(values=self.url_title_list)
                 self.change_layout("-TRANSLATOR BEFORE-")
 
@@ -477,7 +493,11 @@ class EtcTranslatorForAll:
                 self.change_layout("-UPLOADER PAGE-")
                 self.print = self.print_set("-UPLOAD INFO-")
 
-                self.get_news_from_trello()
+            if event == "-UPLOAD REFRESH-":
+                if not values.get("-WECHAT UPLOAD-") and values.get("-WORDPRESS UPLOAD-"):
+                    self.get_news_from_trello(target_list="在上传 - 只WP")
+                else:  # TODO The case where both options not been chosen should be added here
+                    self.get_news_from_trello()
                 for elem in self.upload_news_list:
                     self.print(elem[0])
 
@@ -499,19 +519,16 @@ class EtcTranslatorForAll:
                         print(error)
                         print("Happened while uploading to the wordpress")
 
-                if values.get("-WORDPRESS UPLOAD-"):
-                    # TODO do wordpress uploading
-                    pass
         self.window.close()
 
     def start_the_program(self):
         self.window = sg.Window(
-            f"{self.main_window_name}", self.working_window_layout, size=(800, 600)
+            f"{self.main_window_name}", self.working_window_layout, size=(WIDTH, HEIGHT)
         )
         self.current_visible = "-WELCOME-"
         self.main_loop()
 
 
 if __name__ == "__main__":
-    EtC = EtcTranslatorForAll(os.path.expanduser("~\Downloads\exported-bookmarks.html"))
+    EtC = EtcTranslatorForAll(DOC_PATH)
     EtC.start_the_program()
