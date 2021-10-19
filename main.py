@@ -31,7 +31,7 @@ from newsapi_controller import NewsAPIController
 import threading
 
 DOC_PATH = os.path.expanduser("~\Downloads\exported-bookmarks.html")
-WIDTH = 1366
+WIDTH = 1024
 HEIGHT = 768
 PADDING = 20
 
@@ -494,6 +494,8 @@ class EtcTranslatorForAll:
                 self.print = self.print_set("-UPLOAD INFO-")
 
             if event == "-UPLOAD REFRESH-":
+                self.upload_news_list = list()
+                self.window["-UPLOAD INFO-"].update("")
                 if not values.get("-WECHAT UPLOAD-") and values.get("-WORDPRESS UPLOAD-"):
                     self.get_news_from_trello(target_list="在上传 - 只WP")
                 else:  # TODO The case where both options not been chosen should be added here
