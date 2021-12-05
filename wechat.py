@@ -135,11 +135,12 @@ class Wechat:
         if self.log_check():
             return
 
-        days = self.driver.find_elements_by_xpath("//ul[@id='list']/li")[::-1]
+        days = self.driver.find_elements_by_xpath("//div[@class='weui-desktop-mass__content']")[:7]
+        days = days[::-1]
         all_news = list()
         i = 0
         for day in days:
-            new = day.find_elements_by_xpath("div[2]/div/div[2]/a")
+            new = day.find_elements_by_xpath("div/div[2]/div[2]/div/a")
             for n in new:
                 if re.search("土耳其新闻一周速览", n.text):
                     print("Weekly news has been removed from the news link!")
