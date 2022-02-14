@@ -128,13 +128,15 @@ class Translator:
         self.driver.quit()
         self.translator.quit()
 
-    def parse_link(self):
-        parse_tmp = self.current_news.source_link.split("/")[2].split(".")
-        if parse_tmp[0] == "www":
-            self.current_news.news_outlet = parse_tmp[1]
+    def find_news_outlet(self, source_link):
+        tmp = source_link.split("/")[2].split(".")
+        if tmp[0] == "www":
+            news_outlet = tmp[1]
         else:
-            self.current_news.news_outlet = parse_tmp[0]
+            news_outlet = tmp[1]
+        return news_outlet
 
+    def parse_link(self):
         headers = {
             "reuters": "//h1",
             "apnews": "//div[@class='CardHeadline']/div[1]/h1",
@@ -145,21 +147,21 @@ class Translator:
             "aa": "//div[@class='detay-spot-category']/h1",
             "hurriyetdailynews": "//div[@class='content']/h1",
             "dailysabah": "//h1[@class='main_page_title']",
-            "trtwold": "//div[@class='noMedia.article-header-info']/h1",
+            "trtwold": "//h1[@class='article-title']",
             "nordicmonitor": "//div[@class='entry-header']/h1",
         }
 
         bodies = {
             "reuters": "//p",
             "apnews": "//div[@class='Article']/p",
-            "aljazeera": "//div[@class='wysiwyg wysiwyg--all-content']/*[self::p or self::h2]",
+            "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
             "ahvalnews": "//div[@class='field--item']/div/div/p",
             "turkishminute": "//div[@class='td-ss-main-content']/div[4]/p",
             "duvarenglish": "//div[@class='content-text']/*[self::p or self::h2 or self::h3]",
             "aa": "//div[@class='detay-icerik']/div[1]/p",
             "hurriyetdailynews": "//div[@class='content']/p",
             "dailysabah": "//div[@class='article_body']/p",
-            "trtworld": "//div[@class='contentBox bg-w noMedia']/p",
+            "trtworld": "//div[@class='contentBox.bg-w.noMedia']/p",
             "nordicmonitor": "//div[@class='content-inner ']/p",
         }
 
@@ -357,14 +359,13 @@ class Translator:
                     "//button[@class='sailthru-overlay-close']"
                 )
                 pop_close.click()
-                self.parse_link()
             except sce.NoSuchElementException as error:
                 print(error)
+                print("It is not asking for email so we just skip that part")
         elif self.current_news.news_outlet == "ahvalnews":
             try:
                 pop_close = self.driver.find_element_by_xpath("//a[@class='close']")
                 webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
-                self.parse_link()
             except sce.NoSuchElementException as error:
                 print(error)
 
@@ -379,8 +380,9 @@ class Translator:
             if i == 15:
                 self.driver.execute_script("window.stop();")
                 break
-        self.parse_link()
+        self.current_news.news_outlet = self.find_news_outlet(self.current_news.source_link)
         self.popup_check()
+        self.parse_link()
         self.translate()
         self.output_news()
         self.news_uploaded.append(self.current_news)

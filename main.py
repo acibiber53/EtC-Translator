@@ -307,11 +307,11 @@ class EtcTranslatorForAll:
         self.print(f"Trello card created!\nCard Link:{response.get('url')}\n")
 
     def upload_daily_news_to_trello(self, trello_daily_card, date):
-        self.print("Adding daily news list to the 被选新闻 list！")
+        self.print("Adding daily news list to the 新闻列表 list！")
         daily_card_desc = "\n".join(
             [f"[{elem[0]}]({elem[1]})" for elem in trello_daily_card]
         )
-        self.trel.target_list = self.trel.get_target_list("被选新闻")
+        self.trel.target_list = self.trel.get_target_list("新闻列表")
         response = self.trel.create_a_card(name=date, desc=daily_card_desc, due="")
         self.print(
             f"Trello daily news list card created!\nCard Link:{response.get('url')}\n"
@@ -386,7 +386,7 @@ class EtcTranslatorForAll:
             # Source: https://stackoverflow.com/questions/640001/how-can-i-remove-text-within-parentheses-with-a-regex
             re.sub(r"\([^)]*\)", "", temp)
             # re.sub(r'\（[^)]*\）', '', temp) Not working for Chinese characters
-            temp = temp[:120]
+            temp = temp[:115]
             return temp
 
         self.wc.start_the_system()
