@@ -505,13 +505,6 @@ class EtcTranslatorForAll:
 
             if event == "-UPLOAD BUTTON-":
                 # self.change_layout("-UPLOAD DURING-")
-                if values.get("-WECHAT UPLOAD-"):
-                    self.wc = Wechat()
-                    try:
-                        self.upload_news_to_wechat()
-                    except Exception as error:
-                        print(error)
-                        self.wc.close_browser()
 
                 if values.get("-WORDPRESS UPLOAD-"):
                     self.wordpress = WPC()
@@ -520,6 +513,14 @@ class EtcTranslatorForAll:
                     except Exception as error:
                         print(error)
                         print("Happened while uploading to the wordpress")
+
+                if values.get("-WECHAT UPLOAD-"):
+                    self.wc = Wechat()
+                    try:
+                        self.upload_news_to_wechat()
+                    except Exception as error:
+                        print(error)
+                        self.wc.close_browser()
 
         self.window.close()
 

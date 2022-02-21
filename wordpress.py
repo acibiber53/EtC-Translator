@@ -73,7 +73,7 @@ class WordpressController:
         author="T27",
         comment_status="closed",
         ping_status="closed",
-        categories=["Uncategorized"],
+        categories=["时政"],
         tags=[],
     ):
         url = "https://t27xinwen.com/wp-json/wp/v2/posts"
@@ -91,8 +91,8 @@ class WordpressController:
             "tags": tags,
         }
         print(post)
-        responce = requests.post(url, headers=self.header, json=post)
-        print(responce.json())
+        response = requests.post(url, headers=self.header, json=post)
+        print(response.json())
 
 
 if __name__ == "__main__":

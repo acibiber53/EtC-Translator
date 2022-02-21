@@ -44,15 +44,16 @@ class GoogleDriveAPIController:
         except Exception as error:
             print(error)
             base_path = os.path.abspath(".")
-
-        return os.path.join(base_path, relative_path)
+        res_path = os.path.join(base_path, relative_path)
+        print(res_path)
+        return res_path
 
     def credential_authorization(self):
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists(self.resource_path("Creds/token.pickle")):
-            with open(self.resource_path("Creds/token.pickle"), "rb") as token:
+        if os.path.exists(self.resource_path("Creds\\token.pickle")):
+            with open(self.resource_path("Creds\\token.pickle"), "rb") as token:
                 self.creds = pickle.load(token)
 
         # If there are no (valid) credentials available, let the user log in.
@@ -69,12 +70,15 @@ class GoogleDriveAPIController:
                 pickle.dump(self.creds, token)
 
     def service_creation(self):
-        self.drive_service = build("drive", "v3", credentials=self.creds)
-        self.docs_service = build("docs", "v1", credentials=self.creds)
+        self.drive_service = build("drive", "v3", credentials=self.creds, cache_discovery=False)
+        print("drive services created")
+        self.docs_service = build("docs", "v1", credentials=self.creds, cache_discovery=False)
 
     def start_the_api(self):
         self.credential_authorization()
+        print("credentials authorized")
         self.service_creation()
+        print("services created")
 
     def get_first_ten(self):
         results = (
