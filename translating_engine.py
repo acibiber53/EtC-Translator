@@ -133,7 +133,7 @@ class Translator:
         if tmp[0] == "www":
             news_outlet = tmp[1]
         else:
-            news_outlet = tmp[1]
+            news_outlet = tmp[0]
         return news_outlet
 
     def parse_link(self):

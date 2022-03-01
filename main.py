@@ -366,13 +366,28 @@ class EtcTranslatorForAll:
             self.trs.close_driver()
             sg.popup("All translation job has finished!")
 
+
+
     def get_news_from_trello(self, target_list = "在上传"):
+        def fix_descriptions_to_news_url(url_list):
+            tmp_list = list()
+            for desc in url_list:
+                info = desc.get("_value")
+                link = info[info.find("(") + 1:info.find(")")]
+                tmp_list.append(link)
+            return tmp_list
+
         if self.trel is None:
             self.trel = TrelloController(target_list)
         else:
             self.trel.set_target_list(target_list)
         news_urls_to_upload = self.trel.get_all_urls_from_a_lists_attachments()
+        news_descs_to_upload = self.trel.get_all_descriptions_from_target_list()
+        news_descs_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
+        # news_images_to_upload = find_images_for_news_to_upload(news_descs_to_upload)
+        print(news_descs_to_upload)
         news_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
+
         for news_url in news_urls_to_upload:
             doc_id = self.gdapi.doc_id_from_url(news_url)
             text = self.gdapi.get_a_documents_content(doc_id)  # text is a list

@@ -126,6 +126,26 @@ class TrelloController:
         self.attachment_list = self.get_all_attachment_from_cards_in_target_list()
         return [elem["url"] for elem in self.attachment_list]
 
+    def get_description_for_a_card(self, card_id):
+
+        url = f"https://api.trello.com/1/cards/{card_id}/desc"
+
+        headers = {"Accept": "application/json"}
+
+        query = {"key": self.key, "token": self.token}
+
+        response = requests.request("GET", url, headers=headers, params=query)
+
+        return response.json()
+
+    def get_all_descriptions_from_target_list(self):
+        desc_list = list()
+
+        for card in self.get_cards_in_a_list(self.target_list["id"]):
+            desc_list.append(self.get_description_for_a_card(card["id"]))
+
+        return desc_list
+
 
 if __name__ == "__main__":
     tre = TrelloController("在上传")
