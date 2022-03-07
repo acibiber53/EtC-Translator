@@ -11,6 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from news import News
 import logging
 from fake_useragent import UserAgent
+from news_outlets_xpaths import headers, bodies
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -137,34 +138,6 @@ class Translator:
         return news_outlet
 
     def parse_link(self):
-        headers = {
-            "reuters": "//h1",
-            "apnews": "//div[@class='CardHeadline']/div[1]/h1",
-            "aljazeera": "//header[@class='article-header']/h1",
-            "ahvalnews": "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
-            "turkishminute": "//header/h1",
-            "duvarenglish": "//header/h1",
-            "aa": "//div[@class='detay-spot-category']/h1",
-            "hurriyetdailynews": "//div[@class='content']/h1",
-            "dailysabah": "//h1[@class='main_page_title']",
-            "trtwold": "//h1[@class='article-title']",
-            "nordicmonitor": "//div[@class='entry-header']/h1",
-        }
-
-        bodies = {
-            "reuters": "//p",
-            "apnews": "//div[@class='Article']/p",
-            "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
-            "ahvalnews": "//div[@class='field--item']/div/div/p",
-            "turkishminute": "//div[@class='td-ss-main-content']/div[4]/p",
-            "duvarenglish": "//div[@class='content-text']/*[self::p or self::h2 or self::h3]",
-            "aa": "//div[@class='detay-icerik']/div[1]/p",
-            "hurriyetdailynews": "//div[@class='content']/p",
-            "dailysabah": "//div[@class='article_body']/p",
-            "trtworld": "//div[@class='contentBox.bg-w.noMedia']/p",
-            "nordicmonitor": "//div[@class='content-inner ']/p",
-        }
-
         is_not_found = 0
         try:
             header = self.driver.find_element_by_xpath(
@@ -401,7 +374,7 @@ class Translator:
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://www.hurriyetdailynews.com/floating-tennis-court-on-golden-horn-opens-with-mayors-match-164878"
+    url = "https://ahvalnews.com/decree-laws/not-traitor-says-purged-police-officer-suicide-note"
 
     try:
         trans.translate_main(url)
