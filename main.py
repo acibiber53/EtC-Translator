@@ -28,6 +28,7 @@ import os
 import PySimpleGUI as sg
 import re
 from newsapi_controller import NewsAPIController
+from uploading_engine import UploadingEngine
 import threading
 
 DOC_PATH = os.path.expanduser("~\Downloads\exported-bookmarks.html")
@@ -44,7 +45,7 @@ class EtcTranslatorForAll:
         )
         self.translation_engine = "sogou"
         self.gdapi = GDAPIC()
-        self.trs = self.trel = None
+        self.trs = self.trel = self.upen = None
 
         # GUI variables
         self.main_window_name = "EtC Translator for all"
@@ -367,7 +368,6 @@ class EtcTranslatorForAll:
             sg.popup("All translation job has finished!")
 
 
-
     def get_news_from_trello(self, target_list = "在上传"):
         def fix_descriptions_to_news_url(url_list):
             tmp_list = list()
@@ -383,12 +383,12 @@ class EtcTranslatorForAll:
             self.trel.set_target_list(target_list)
         news_urls_to_upload = self.trel.get_all_urls_from_a_lists_attachments()
         news_descs_to_upload = self.trel.get_all_descriptions_from_target_list()
-        news_descs_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
-        # news_images_to_upload = find_images_for_news_to_upload(news_descs_to_upload)
-        print(news_descs_to_upload)
-        news_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
+        self.news_source_urls_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
 
-        for news_url in news_urls_to_upload:
+
+        news_docs_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
+
+        for news_url in news_docs_urls_to_upload:
             doc_id = self.gdapi.doc_id_from_url(news_url)
             text = self.gdapi.get_a_documents_content(doc_id)  # text is a list
             self.upload_news_list.append(text)
@@ -511,6 +511,7 @@ class EtcTranslatorForAll:
             if event == "-UPLOAD REFRESH-":
                 self.upload_news_list = list()
                 self.window["-UPLOAD INFO-"].update("")
+                self.upen = UploadingEngine()
                 if not values.get("-WECHAT UPLOAD-") and values.get("-WORDPRESS UPLOAD-"):
                     self.get_news_from_trello(target_list="在上传 - 只WP")
                 else:  # TODO The case where both options not been chosen should be added here
@@ -520,7 +521,7 @@ class EtcTranslatorForAll:
 
             if event == "-UPLOAD BUTTON-":
                 # self.change_layout("-UPLOAD DURING-")
-
+                self.upen.do_daily_download_for_images(self.news_source_urls_to_upload)
                 if values.get("-WORDPRESS UPLOAD-"):
                     self.wordpress = WPC()
                     try:

@@ -8,12 +8,13 @@ image_paths = {
     "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
     "ahvalnews": "//div[@class='field-content']/picture/img/@src",
     "turkishminute": "//div[@class='td-post-featured-image']/a/@href",
-    "duvarenglish": "//picture",
-    "aa": "//div[@class='col-md-10']/img/@src",
+    "duvarenglish": "//meta[@property='og:image']/@content",
+    "aa": "//meta[@name='twitter:image:src']/@content",
     "hurriyetdailynews": "//div[@class='content']/img/@data-src",
     "dailysabah": "//div[@class='article_top_image_widget']/div/a/@href",
     "trtworld": "//figure[@class='content-image']/img/@src",
-    "nordicmonitor": "//div[@class='content-inner ']/p",
+    "nordicmonitor": "//div[@class='jeg_inner_content']/div/a/@href",
+    "stockholmcf": "//div[@class='td-post-featured-image']/a/@href",
 }
 
 headers = {
