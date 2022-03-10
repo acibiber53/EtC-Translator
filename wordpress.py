@@ -4,6 +4,7 @@ Sources:
 - https://developer.wordpress.org/rest-api/
 
 """
+import pytz
 import requests
 import json
 from credentials import wordpress_username, wordpress_password, wordpress_post_url
@@ -99,4 +100,11 @@ if __name__ == "__main__":
     wpc = WordpressController()
     title = "看看会不会使用"
     content = "这里应该有一些内容\n\n然后跳一跳\n\n然后看看是否工作"
-    wpc.upload_a_post(title, content, status="draft")
+    publish_date = datetime.datetime.now().strftime("%Y-%m-%dT")
+    minutes = "00"
+    for i in range(4):
+        print(publish_date + f"18:{minutes}:00+08:00")
+        minutes = int(minutes) + 10
+
+    # wpc.upload_a_post(title, content, status="draft")
+    # wpc.fetch_posts(get_eveything=True)
