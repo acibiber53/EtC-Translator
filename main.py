@@ -432,14 +432,16 @@ class EtcTranslatorForAll:
         self.wc.close_browser()
 
     def upload_news_to_wordpress(self):
-        minutes = "00"
+        minutes = (self.number_of_news_to_upload * 10) - 10
         publish_date = datetime.datetime.now().strftime("%Y-%m-%dT")
         for news in self.upload_news_list:
             text = '\n\n'.join(news[1:-1])
             exc = '\n\n'.join(news[1:3])
             publish_time = publish_date + f"18:{minutes}:00+08:00"
             self.wordpress.upload_a_post(title=news[0], content=text, excerpt=exc, status='draft', date=publish_time)
-            minutes = int(minutes) + 10
+            minutes = int(minutes) - 10
+            if minutes == 0:
+                minutes = "00"
 
     def selected_news_listing(self, nlist):
         selected_news = list()
