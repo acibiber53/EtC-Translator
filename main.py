@@ -103,7 +103,7 @@ class EtcTranslatorForAll:
             ],
         ]
 
-        empty_list = [["", ""], ["", ""]]
+        empty_list = [["This is a placeholder for a title of a news.", "This is their Source"], ["", ""]]
         self.news_selection_layout = [
             *title_maker("Translator"),
             [sg.Text("News list for selection")],
@@ -115,8 +115,8 @@ class EtcTranslatorForAll:
                     # vertical_scroll_only=True,
                     enable_events=True,
                     num_rows=15,
-                    def_col_width=50,
-                    auto_size_columns=True,
+                    def_col_width=100,
+                    # auto_size_columns=True,
                     col_widths=[100, 15],
                     select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                     key="-NEWS SELECTION TABLE-",
@@ -207,7 +207,7 @@ class EtcTranslatorForAll:
 
         # Main working window layout
         SIDEBAR_WIDTH = int(WIDTH/4-PADDING)
-        REST_WIDTH = int(WIDTH/4*3-PADDING)
+        REST_WIDTH = int((WIDTH/4)*3-PADDING)
         REAL_HEIGHT = int(HEIGHT-3*PADDING)
         self.working_window_layout = [
             [
