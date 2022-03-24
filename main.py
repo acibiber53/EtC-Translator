@@ -17,8 +17,8 @@ After making the exe file, one other file should be put into same directory:
 
 
 """
-from bs4 import BeautifulSoup
-from translating_engine import Translator
+
+from translating_engine import Translator, htm_to_urllist
 from gdapi_controller import GoogleDriveAPIController as GDAPIC
 from trello_controller import TrelloController
 from wechat import Wechat
@@ -39,30 +39,21 @@ PADDING = 20
 
 
 class EtcTranslatorForAll:
-    def __init__(self, news_link_document_path="news-to-translate.htm"):
+    def __init__(self):
         # Translation variables
-        self.url_title_list, self.url_list = self.htm_to_urllist(
+        self.url_title_list, self.url_list = htm_to_urllist(
             DOC_PATH
         )
         self.translation_engine = "sogou"
-        self.gdapi = GDAPIC()
-        self.trs = self.trel = self.upen = None
+        self.gdapi = self.trs = self.trel = self.upen = None
 
         # GUI variables
         self.main_window_name = "EtC Translator for all"
 
         # News selection variables
-        self.nac = NewsAPIController()
-        try:
-            self.daily_news_selection_list = self.nac.get_eveything_turkey()
-            # Format of this list:
-            # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
-            self.table_data = self.table_data_maker(self.daily_news_selection_list)
-        except Exception as error:
-            sg.PopupError(
-                f"{error}\nThere was a problem with the NewsAPI, check your credentials"
-            )
-            self.table_data = list()
+        self.nac = None
+        self.table_data = None
+        self.daily_news_selection_list = None
 
         # Layouts needed
         self.welcome_layout = (
@@ -82,40 +73,6 @@ class EtcTranslatorForAll:
         self.upload_news_list = list()
         self.wc = None
         self.number_of_news_to_upload = 0
-
-    def table_data_maker(self, news_list):
-        # putting titles and sources into one table
-        sources = [elem[0].get("name") for elem in self.daily_news_selection_list]
-        titles = [elem[2] for elem in self.daily_news_selection_list]
-        table_data = [[title, source] for (title, source) in zip(titles, sources)]
-        return table_data
-
-    @staticmethod
-    def htm_to_urllist(doc_name):
-        """This method opens a predetermined htm file that is extracted from the bookmarks of chrome, and
-        lists every link inside of it.
-
-        Preparation for the htm file should be done well. Steps for that:
-        1 - Put all your websites you want to translate into one bookmark folder. Ctrl + Shift + D for short.
-        2 - Open the file, find your folder, copy the content.
-        3 - Open MS Word, paste the content, save the folder as .htm/ .html"""
-        try:
-            with open(doc_name, encoding="utf-8") as file:
-                soup = BeautifulSoup(file, "lxml")
-        except FileNotFoundError:
-            print(
-                f"We couldn't find your document, please make sure to have a document named {doc_name}. "
-                f"Add the required htm file and try again!"
-            )
-            os.system("pause")
-            return -1, -1
-
-        urllist = list()
-        url_title_list = list()
-        for link in soup.find_all("a"):
-            urllist.append(link.get("href"))
-            url_title_list.append(link.get_text().replace("\n", " "))
-        return url_title_list, urllist
 
     def set_layouts(self):
         def sidebar_maker():
@@ -146,19 +103,20 @@ class EtcTranslatorForAll:
             ],
         ]
 
+        empty_list = [["", ""], ["", ""]]
         self.news_selection_layout = [
             *title_maker("Translator"),
             [sg.Text("News list for selection")],
             [
                 sg.Table(
-                    values=self.table_data,
+                    values=empty_list,
                     headings=["Title", "Source"],
                     justification="left",
                     # vertical_scroll_only=True,
                     enable_events=True,
                     num_rows=15,
-                    # def_col_width=50,
-                    # auto_size_columns=True,
+                    def_col_width=50,
+                    auto_size_columns=True,
                     col_widths=[100, 15],
                     select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                     key="-NEWS SELECTION TABLE-",
@@ -173,7 +131,7 @@ class EtcTranslatorForAll:
             [sg.Text("News list for translation")],
             [
                 sg.Listbox(
-                    values=self.url_title_list,
+                    values=empty_list[0],
                     enable_events=True,
                     size=(100, 15),
                     key="-NEWS LIST-",
@@ -202,7 +160,7 @@ class EtcTranslatorForAll:
             ],
             [
                 sg.ProgressBar(
-                    max_value=len(self.url_title_list),
+                    max_value=5,
                     size=(70, 25),
                     key="-PROG-",
                     pad=((0, 0), (15, 15)),
@@ -368,8 +326,7 @@ class EtcTranslatorForAll:
             self.trs.close_driver()
             sg.popup("All translation job has finished!")
 
-
-    def get_news_from_trello(self, target_list = "在上传"):
+    def get_news_from_trello(self, target_list="在上传"):
         def fix_descriptions_to_news_url(url_list):
             tmp_list = list()
             for desc in url_list:
@@ -463,6 +420,13 @@ class EtcTranslatorForAll:
         self.wc.add_weekly_news()
         sg.Popup("Sunday Collector uploaded all news!")
 
+    def table_data_maker(self):
+        # putting titles and sources into one table
+        sources = [elem[0].get("name") for elem in self.daily_news_selection_list]
+        titles = [elem[2] for elem in self.daily_news_selection_list]
+        table_data = [[title, source] for (title, source) in zip(titles, sources)]
+        return table_data
+
     def main_loop(self):
         while True:
             event, values = self.window.read()
@@ -470,6 +434,20 @@ class EtcTranslatorForAll:
             if event in (None, "-EXIT-"):
                 break
             if event == "-NEWS FEED SBB-":
+                self.nac = NewsAPIController()
+                try:
+                    self.daily_news_selection_list = self.nac.get_eveything_turkey()
+                    print(self.daily_news_selection_list)
+                    # Format of this list:
+                    # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
+                    self.table_data = self.table_data_maker()
+                    self.window["-NEWS SELECTION TABLE-"].update(values=self.table_data)
+                except Exception as error:
+                    sg.PopupError(
+                        f"{error}\nThere was a problem with the NewsAPI, check your credentials"
+                    )
+                    self.table_data = list()
+                self.window["-PROG-"].update(current_count=0, max=len(self.url_title_list))
                 self.change_layout("-NEWS SELECTION-")
 
             if event == "-SELECTION COMPLETE-":
@@ -477,7 +455,7 @@ class EtcTranslatorForAll:
                 self.selected_news_listing(news_selected)
 
             if event == "-TRANSLATOR SBB-":
-                self.url_title_list, self.url_list = self.htm_to_urllist(
+                self.url_title_list, self.url_list = htm_to_urllist(
                     DOC_PATH
                 )
                 self.window["-NEWS LIST-"].Update(values=self.url_title_list)
@@ -491,6 +469,7 @@ class EtcTranslatorForAll:
                     continue
                 self.print = self.print_set("-NEWS INFO-")
                 self.change_layout("-TRANSLATOR DURING-")
+                self.gdapi = GDAPIC()
                 # threading.Thread(target=translate_news, args=(window, urlinfo[1],), daemon=True).start()
                 if values.get("-SOGOU-"):
                     self.translate_news("sogou")
@@ -556,5 +535,5 @@ class EtcTranslatorForAll:
 
 
 if __name__ == "__main__":
-    EtC = EtcTranslatorForAll(DOC_PATH)
+    EtC = EtcTranslatorForAll()
     EtC.start_the_program()

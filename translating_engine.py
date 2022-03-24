@@ -12,6 +12,7 @@ from news import News
 import logging
 from fake_useragent import UserAgent
 from news_outlets_xpaths import headers, bodies
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -371,6 +372,32 @@ class Translator:
             )
             print()
 
+
+def htm_to_urllist(doc_name):
+    """This method opens a predetermined htm file that is extracted from the bookmarks of chrome, and
+    lists every link inside of it.
+
+    Preparation for the htm file should be done well. Steps for that:
+    1 - Put all your websites you want to translate into one bookmark folder. Ctrl + Shift + D for short.
+    2 - Open the file, find your folder, copy the content.
+    3 - Open MS Word, paste the content, save the folder as .htm/ .html"""
+    try:
+        with open(doc_name, encoding="utf-8") as file:
+            soup = BeautifulSoup(file, "lxml")
+    except FileNotFoundError:
+        print(
+            f"We couldn't find your document, please make sure to have a document named {doc_name}. "
+            f"Add the required htm file and try again!"
+        )
+        os.system("pause")
+        return -1, -1
+
+    urllist = list()
+    url_title_list = list()
+    for link in soup.find_all("a"):
+        urllist.append(link.get("href"))
+        url_title_list.append(link.get_text().replace("\n", " "))
+    return url_title_list, urllist
 
 if __name__ == "__main__":
     trans = Translator("sogou")
