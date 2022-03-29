@@ -18,6 +18,7 @@ After making the exe file, one other file should be put into same directory:
 
 """
 
+from credentials import trello_upload_board_id
 from translating_engine import Translator, htm_to_urllist
 from gdapi_controller import GoogleDriveAPIController as GDAPIC
 from trello_controller import TrelloController
@@ -336,13 +337,17 @@ class EtcTranslatorForAll:
             return tmp_list
 
         if self.trel is None:
-            self.trel = TrelloController(target_list)
+            self.trel = TrelloController(trello_upload_board_id, target_list)
         else:
+            self.trel.set_target_board(trello_upload_board_id)
             self.trel.set_target_list(target_list)
+
+        if self.gdapi is None:
+            self.gdapi = GDAPIC()
+
         news_urls_to_upload = self.trel.get_all_urls_from_a_lists_attachments()
         news_descs_to_upload = self.trel.get_all_descriptions_from_target_list()
         self.news_source_urls_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
-
 
         news_docs_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
 
