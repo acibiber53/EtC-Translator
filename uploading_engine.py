@@ -44,6 +44,8 @@ class UploadingEngine:
         for news_url in self.news_urllist:
             news_outlet = find_news_outlet(news_url)
             img_xpath = image_paths.get(news_outlet)
+            # print(news_url)
+            # print(img_xpath)
             if not img_xpath:
                 print(f"Couldn't find your news outlet:{news_outlet}")
                 img_xpath = "//img[1]/@src"
@@ -59,6 +61,7 @@ class UploadingEngine:
             tree = etree.HTML(html_content, html_parser)
             # print(etree.tostring(tree, pretty_print=True))
             data = tree.xpath(img_xpath)
+            # print(data)
             try:
                 data = data[0]
             except IndexError:
@@ -70,6 +73,7 @@ class UploadingEngine:
         return images_links
 
     def persist_image(self, folder_path, url):
+        file_path = ""
         try:
             image_content = requests.get(url).content
         except Exception as e:
@@ -85,18 +89,25 @@ class UploadingEngine:
         except Exception as e:
             print(f"ERROR - Could not save {url} - {e}")
 
+        return file_path
+
     def download_daily_images(self, image_url_list):
         output_directory = re.sub("-", ".", str(date.today())) + "\\"
         if not os.path.exists(output_directory):
             os.mkdir(output_directory)
 
+        file_paths = list()
+
         for image_link in image_url_list:
-            self.persist_image(output_directory, image_link)
+            file_path = self.persist_image(output_directory, image_link)
+            file_paths.append(file_path)
+        return file_paths
 
     def do_daily_download_for_images(self, news_list):
         self.news_urllist = news_list
         test_image_urls = self.find_images_for_news_to_upload()
-        self.download_daily_images(test_image_urls)
+        file_paths = self.download_daily_images(test_image_urls)
+        return file_paths
 
 
 if __name__ == '__main__':
@@ -120,5 +131,4 @@ if __name__ == '__main__':
     """
 
     UE = UploadingEngine()
-    UE.do_daily_download_for_images(test_urls)
-
+    UE.do_daily_download_for_images(["https://ahvalnews.com/turkish-lira/foreigners-can-invest-turkeys-dollar-linked-lira-deposits"])

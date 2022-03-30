@@ -6,7 +6,7 @@ image_paths = {
     "reuters": "//img[1]/@src",
     "apnews": "//meta[@property='twitter:image']/@content",
     "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
-    "ahvalnews": "//div[@class='field-content']/picture/img/@src",
+    "ahvalnews": "//div[@class='field-content']",
     "turkishminute": "//div[@class='td-post-featured-image']/a/@href",
     "duvarenglish": "//meta[@property='og:image']/@content",
     "aa": "//meta[@name='twitter:image:src']/@content",

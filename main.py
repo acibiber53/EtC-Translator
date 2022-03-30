@@ -393,14 +393,17 @@ class EtcTranslatorForAll:
         sg.popup("Everything is uploaded to Wechat!")
         self.wc.close_browser()
 
-    def upload_news_to_wordpress(self):
+    def upload_news_to_wordpress(self, image_paths):
         minutes = (self.number_of_news_to_upload * 10) - 10
         publish_date = datetime.datetime.now().strftime("%Y-%m-%dT")
-        for news in self.upload_news_list:
+        for index, news in enumerate(self.upload_news_list):
             text = '\n\n'.join(news[1:-1])
             exc = '\n\n'.join(news[1:3])
             publish_time = publish_date + f"18:{minutes}:00+08:00"
-            self.wordpress.upload_a_post(title=news[0], content=text, excerpt=exc, status='draft', date=publish_time)
+            image_id, image_link = self.wordpress.upload_a_media_file(image_path=image_paths[index])
+            time.sleep(3)
+            response = self.wordpress.upload_a_post(title=news[0], content=text, excerpt=exc, status='draft', date=publish_time, featured_media=int(image_id))
+            # print(response)
             minutes = int(minutes) - 10
             if minutes == 0:
                 minutes = "00"
@@ -512,11 +515,11 @@ class EtcTranslatorForAll:
 
             if event == "-UPLOAD BUTTON-":
                 # self.change_layout("-UPLOAD DURING-")
-                self.upen.do_daily_download_for_images(self.news_source_urls_to_upload)
+                image_paths = self.upen.do_daily_download_for_images(self.news_source_urls_to_upload)
                 if values.get("-WORDPRESS UPLOAD-"):
                     self.wordpress = WPC()
                     try:
-                        self.upload_news_to_wordpress()
+                        self.upload_news_to_wordpress(image_paths)
                     except Exception as error:
                         print(error)
                         print("Happened while uploading to the wordpress")
