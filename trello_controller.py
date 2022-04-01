@@ -4,10 +4,10 @@ from credentials import trello_key, trello_token, trello_translation_board_id
 
 
 class TrelloController:
-    def __init__(self, target_board_id, target_list_name="准备中"):
+    def __init__(self, target_board_id=trello_translation_board_id, target_list_name="准备中"):
         self.key = trello_key
         self.token = trello_token
-        self.id_board = trello_translation_board_id if target_board_id is None else target_board_id
+        self.id_board = target_board_id
         self.all_lists = self.get_all_lists()
         self.target_list = self.get_target_list(target_list_name)
         self.attachment_list = list()

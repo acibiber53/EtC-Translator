@@ -282,9 +282,10 @@ class EtcTranslatorForAll:
         if self.url_list == -1:
             return
 
-        self.trs = Translator(t_engine)
         self.trel = TrelloController()
         trello_daily_card = list()
+
+        self.trs = Translator(t_engine)
 
         try:
             for index, link in enumerate(self.url_list):
