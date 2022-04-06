@@ -432,6 +432,7 @@ class EtcTranslatorForAll:
                     # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
                     self.daily_news_selection_list, self.table_data = get_all_news_about_turkey()
                     self.window["-NEWS SELECTION TABLE-"].update(values=self.table_data)
+
                 except Exception as error:
                     sg.PopupError(
                         f"{error}\nThere was a problem with the NewsAPI, check your credentials"
