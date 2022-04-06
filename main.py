@@ -28,7 +28,7 @@ import time
 import os
 import PySimpleGUI as sg
 import re
-from newsapi_controller import NewsAPIController
+from newsapi_controller import NewsAPIController, selected_news_listing, get_all_news_about_turkey
 from uploading_engine import UploadingEngine
 import datetime
 import threading
@@ -409,17 +409,6 @@ class EtcTranslatorForAll:
             if minutes == 0:
                 minutes = "00"
 
-    def selected_news_listing(self, nlist):
-        selected_news = list()
-        for news_index in nlist:
-            news = self.table_data[news_index]
-            for elem in self.daily_news_selection_list:
-                if news[0] in elem:
-                    selected_news.append(elem)
-                    break
-        self.url_list = [elem[4] for elem in selected_news]
-        self.url_title_list = [elem[2] for elem in selected_news]
-
     def sunday_collect_and_upload(self):
         self.wc.start_the_system()
         self.wc.enter_to_wechat()
@@ -429,27 +418,19 @@ class EtcTranslatorForAll:
         self.wc.add_weekly_news()
         sg.Popup("Sunday Collector uploaded all news!")
 
-    def table_data_maker(self):
-        # putting titles and sources into one table
-        sources = [elem[0].get("name") for elem in self.daily_news_selection_list]
-        titles = [elem[2] for elem in self.daily_news_selection_list]
-        table_data = [[title, source] for (title, source) in zip(titles, sources)]
-        return table_data
-
     def main_loop(self):
+        # This flag is not being reverted back, so it only works one way. Might create problems in the future
+        selected_from_news_api = False
         while True:
             event, values = self.window.read()
             print(event, values)
             if event in (None, "-EXIT-"):
                 break
             if event == "-NEWS FEED SBB-":
-                self.nac = NewsAPIController()
                 try:
-                    self.daily_news_selection_list = self.nac.get_eveything_turkey()
-                    print(self.daily_news_selection_list)
-                    # Format of this list:
+                    # Format of the list daily_news_selection_list:
                     # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
-                    self.table_data = self.table_data_maker()
+                    self.daily_news_selection_list, self.table_data = get_all_news_about_turkey()
                     self.window["-NEWS SELECTION TABLE-"].update(values=self.table_data)
                 except Exception as error:
                     sg.PopupError(
@@ -461,12 +442,16 @@ class EtcTranslatorForAll:
 
             if event == "-SELECTION COMPLETE-":
                 news_selected = values["-NEWS SELECTION TABLE-"]
-                self.selected_news_listing(news_selected)
+                self.url_list, self.url_title_list = selected_news_listing(news_selected,
+                                                                           self.table_data,
+                                                                           self.daily_news_selection_list)
+                selected_from_news_api = True
 
             if event == "-TRANSLATOR SBB-":
-                self.url_title_list, self.url_list = htm_to_urllist(
-                    DOC_PATH
-                )
+                if not selected_from_news_api:
+                    self.url_title_list, self.url_list = htm_to_urllist(
+                        DOC_PATH
+                    )
                 self.window["-NEWS LIST-"].Update(values=self.url_title_list)
                 self.change_layout("-TRANSLATOR BEFORE-")
 

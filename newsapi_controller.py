@@ -57,6 +57,40 @@ class NewsAPIController:
         return self.daily_news
 
 
+def selected_news_listing(nlist, table_data, daily_news_selection_list):
+    """
+    From the selected news, returns the url and title lists
+    :param nlist: list. Comes from -NEWS SELECTION TABLE-. Contains the index of the selected news.
+    :param table_data: 2D list, list of urls and titles together. Formatted like [[title1, source1],...]
+    :param daily_news_selection_list: list. News that are selected from news api. Each entry contains all the info about
+    a single news
+    :return: url_list : list. URLs for the selected news
+    :return: url_title_list : list. Titles for the selected news
+    """
+    selected_news = list()
+    for news_index in nlist:
+        news = table_data[news_index]
+        for elem in daily_news_selection_list:
+            if news[0] in elem:
+                selected_news.append(elem)
+                break
+    url_list = [elem[4] for elem in selected_news]
+    url_title_list = [elem[2] for elem in selected_news]
+    return url_list, url_title_list
+
+
+def get_all_news_about_turkey():
+
+    nac = NewsAPIController()
+    daily_news_selection_list = nac.get_eveything_turkey()
+
+    sources = [elem[0].get("name") for elem in daily_news_selection_list]
+    titles = [elem[2] for elem in daily_news_selection_list]
+    table_data = [[title, source] for (title, source) in zip(titles, sources)]
+
+    return daily_news_selection_list, table_data
+
+
 if __name__ == "__main__":
     nac = NewsAPIController()
     # nac.get_sources()
