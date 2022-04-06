@@ -397,10 +397,8 @@ class EtcTranslatorForAll:
                 self.change_layout("-TRANSLATOR DURING-")
                 # threading.Thread(target=translate_news, args=(window, urlinfo[1],), daemon=True).start()
                 if values.get("-SOGOU-"):
-                    # self.translate_news("sogou")
                     translate_news("sogou", self.url_list, self.print, self.window)
                 elif values.get("-BAIDU-"):
-                    # self.translate_news("baidu")
                     translate_news("baidu", self.url_list, self.print, self.window)
                 sg.popup("All translation job has finished!")
 
