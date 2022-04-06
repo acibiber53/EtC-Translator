@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as sce
-from time import sleep
+from time import sleep, time
 from datetime import date
 import re
 from docx import Document
@@ -13,6 +13,8 @@ import logging
 from fake_useragent import UserAgent
 from news_outlets_xpaths import headers, bodies
 from bs4 import BeautifulSoup
+from trello_controller import create_card_with_trello, TrelloController, upload_daily_news_to_trello
+from gdapi_controller import GoogleDriveAPIController as GDAPI
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -398,6 +400,62 @@ def htm_to_urllist(doc_name):
         urllist.append(link.get("href"))
         url_title_list.append(link.get_text().replace("\n", " "))
     return url_title_list, urllist
+
+
+def translate_news(t_engine, url_list, printing_func, window):
+    if url_list == -1:
+        return
+
+    trello_daily_card = list()
+    gdapi = GDAPI()
+    trello_instance = TrelloController()
+    trs = Translator(t_engine)
+
+    try:
+        for index, link in enumerate(url_list):
+            # Initial Translation Part
+            start_time = time()
+            printing_func(f"Translation begins for {link}")
+            trs.translate_main(link)
+            printing_func(
+                f"Translation ends, it took {time() - start_time} seconds.\n"
+            )
+
+            # Creating Trello card template for later use
+            trello_daily_card.append(
+                (
+                    trs.current_news.title_english,
+                    trs.current_news.source_link,
+                )
+            )
+
+            # Uploading to Google
+            printing_func("Uploading to Google Drive!")
+            (
+                news_title,
+                trs.current_news.google_upload_link,
+            ) = gdapi.docx_to_gdocs_uploader(
+                trs.current_news.document_name,
+                trs.current_news.document_path,
+            )
+            printing_func(
+                f"Uploaded!\nFile Name: {news_title}\nFile URL: {trs.current_news.google_upload_link}\n"
+            )
+
+            # Creating Trello Card
+            create_card_with_trello(trs.current_news, printing_func, trello_instance)
+            window["-PROG-"].update(index + 1)
+
+    except Exception as error:
+        # print(error)
+        printing_func(error)
+
+    finally:
+        upload_daily_news_to_trello(
+            trello_daily_card, trs.current_news.translation_date, printing_func, trello_instance
+        )
+        trs.close_driver()
+
 
 if __name__ == "__main__":
     trans = Translator("sogou")

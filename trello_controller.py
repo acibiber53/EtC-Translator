@@ -150,6 +150,27 @@ class TrelloController:
         return desc_list
 
 
+def create_card_with_trello(news, printing_func, trel):
+    printing_func("Creating Trello card at 准备中 list!")
+    desc = f"[{news.title_english}]({news.source_link})"
+    response = trel.create_card_then_attach_link(
+        name=news.title_english, desc=desc, url_source=news.google_upload_link
+    )
+    printing_func(f"Trello card created!\nCard Link:{response.get('url')}\n")
+
+
+def upload_daily_news_to_trello(trello_daily_card, date, printing_func, trel):
+    printing_func("Adding daily news list to the 新闻列表 list！")
+    daily_card_desc = "\n".join(
+        [f"[{elem[0]}]({elem[1]})" for elem in trello_daily_card]
+    )
+    trel.target_list = trel.get_target_list("新闻列表")
+    response = trel.create_a_card(name=date, desc=daily_card_desc, due="")
+    printing_func(
+        f"Trello daily news list card created!\nCard Link:{response.get('url')}\n"
+    )
+
+
 if __name__ == "__main__":
     tre = TrelloController("在上传")
     print("\n".join(tre.get_all_urls_from_a_lists_attachments()))

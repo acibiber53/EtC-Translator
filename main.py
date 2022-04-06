@@ -19,7 +19,7 @@ After making the exe file, one other file should be put into same directory:
 """
 
 from credentials import trello_upload_board_id
-from translating_engine import Translator, htm_to_urllist
+from translating_engine import Translator, htm_to_urllist, translate_news
 from gdapi_controller import GoogleDriveAPIController as GDAPIC
 from trello_controller import TrelloController
 from wechat import Wechat
@@ -259,75 +259,6 @@ class EtcTranslatorForAll:
         self.window[target].update(visible=True)
         self.current_visible = target
 
-    def create_card_with_trello(self, news):
-        self.print("Creating Trello card at 准备中 list!")
-        desc = f"[{news.title_english}]({news.source_link})"
-        response = self.trel.create_card_then_attach_link(
-            name=news.title_english, desc=desc, url_source=news.google_upload_link
-        )
-        self.print(f"Trello card created!\nCard Link:{response.get('url')}\n")
-
-    def upload_daily_news_to_trello(self, trello_daily_card, date):
-        self.print("Adding daily news list to the 新闻列表 list！")
-        daily_card_desc = "\n".join(
-            [f"[{elem[0]}]({elem[1]})" for elem in trello_daily_card]
-        )
-        self.trel.target_list = self.trel.get_target_list("新闻列表")
-        response = self.trel.create_a_card(name=date, desc=daily_card_desc, due="")
-        self.print(
-            f"Trello daily news list card created!\nCard Link:{response.get('url')}\n"
-        )
-
-    def translate_news(self, t_engine):
-        if self.url_list == -1:
-            return
-
-        self.trel = TrelloController()
-        trello_daily_card = list()
-
-        self.trs = Translator(t_engine)
-
-        try:
-            for index, link in enumerate(self.url_list):
-                start_time = time.time()
-                self.print(f"Translation begins for {link}")
-                self.trs.translate_main(link)
-                self.print(
-                    f"Translation ends, it took {time.time() - start_time} seconds.\n"
-                )
-
-                trello_daily_card.append(
-                    (
-                        self.trs.current_news.title_english,
-                        self.trs.current_news.source_link,
-                    )
-                )
-
-                self.print("Uploading to Google Drive!")
-                (
-                    news_title,
-                    self.trs.current_news.google_upload_link,
-                ) = self.gdapi.docx_to_gdocs_uploader(
-                    self.trs.current_news.document_name,
-                    self.trs.current_news.document_path,
-                )
-                self.print(
-                    f"Uploaded!\nFile Name: {news_title}\nFile URL: {self.trs.current_news.google_upload_link}\n"
-                )
-
-                self.create_card_with_trello(self.trs.current_news)
-                self.window["-PROG-"].update(index + 1)
-
-        except Exception as error:
-            sg.popup_error(error)
-
-        finally:
-            self.upload_daily_news_to_trello(
-                trello_daily_card, self.trs.current_news.translation_date
-            )
-            self.trs.close_driver()
-            sg.popup("All translation job has finished!")
-
     def get_news_from_trello(self, target_list="在上传"):
         def fix_descriptions_to_news_url(url_list):
             tmp_list = list()
@@ -464,12 +395,14 @@ class EtcTranslatorForAll:
                     continue
                 self.print = self.print_set("-NEWS INFO-")
                 self.change_layout("-TRANSLATOR DURING-")
-                self.gdapi = GDAPIC()
                 # threading.Thread(target=translate_news, args=(window, urlinfo[1],), daemon=True).start()
                 if values.get("-SOGOU-"):
-                    self.translate_news("sogou")
+                    # self.translate_news("sogou")
+                    translate_news("sogou", self.url_list, self.print, self.window)
                 elif values.get("-BAIDU-"):
-                    self.translate_news("baidu")
+                    # self.translate_news("baidu")
+                    translate_news("baidu", self.url_list, self.print, self.window)
+                sg.popup("All translation job has finished!")
 
             if event == "-SUNDAY COL SBB-":
                 self.change_layout("-SUNDAY COLLECTOR-")
