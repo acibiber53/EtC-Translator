@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime, timedelta
-from credentials import trello_key, trello_token, trello_translation_board_id
+from credentials import trello_key, trello_token, trello_translation_board_id, trello_upload_board_id
 
 
 class TrelloController:
@@ -169,6 +169,26 @@ def upload_daily_news_to_trello(trello_daily_card, date, printing_func, trel):
     printing_func(
         f"Trello daily news list card created!\nCard Link:{response.get('url')}\n"
     )
+
+
+def get_news_to_upload_from_trello_list(target_list="在上传"):
+    def fix_descriptions_to_news_url(url_list):
+        tmp_list = list()
+        for desc in url_list:
+            info = desc.get("_value")
+            link = info[info.find("(") + 1:info.find(")")]
+            tmp_list.append(link)
+        return tmp_list
+
+    trel = TrelloController(trello_upload_board_id, target_list)
+
+    news_urls_to_upload = trel.get_all_urls_from_a_lists_attachments()
+    news_descs_to_upload = trel.get_all_descriptions_from_target_list()
+    news_source_urls_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
+
+    news_docs_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
+
+    return news_source_urls_to_upload, news_docs_urls_to_upload
 
 
 if __name__ == "__main__":

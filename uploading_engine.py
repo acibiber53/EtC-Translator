@@ -7,8 +7,14 @@ from PIL import Image
 from io import BytesIO
 import hashlib
 import re
-from datetime import date
+from datetime import date, datetime
+from time import sleep
 import urllib.request
+from trello_controller import get_news_to_upload_from_trello_list
+from gdapi_controller import GoogleDriveAPIController as GDAPIC
+from wordpress import WordpressController as WPC
+from wechat import Wechat
+
 
 class UploadingEngine:
     def __init__(self, urllist=""):
@@ -108,6 +114,90 @@ class UploadingEngine:
         test_image_urls = self.find_images_for_news_to_upload()
         file_paths = self.download_daily_images(test_image_urls)
         return file_paths
+
+
+def get_news_from_trello(upload_news_list, target_list="在上传"):
+    news_source_urls_to_upload, news_docs_urls_to_upload = get_news_to_upload_from_trello_list()
+    gdapi = GDAPIC()
+
+    for news_url in news_docs_urls_to_upload:
+        doc_id = gdapi.doc_id_from_url(news_url)
+        text = gdapi.get_a_documents_content(doc_id)  # text is a list
+        upload_news_list.append(text)
+    number_of_news_to_upload = len(upload_news_list)
+    return upload_news_list, number_of_news_to_upload, news_source_urls_to_upload
+
+
+def sunday_collect_and_upload():
+    wc = Wechat()
+    wc.start_the_system()
+    wc.enter_to_wechat()
+    wc.get_news_links()
+    wc.title_image_text_extract()
+    wc.open_text_editor_from_home()
+    wc.add_weekly_news()
+    wc.close_browser()
+
+
+def upload_news_to_wordpress(image_urls, number_of_news_to_upload, upload_news_list):
+    wordpress = WPC()
+    minutes = (number_of_news_to_upload * 10) - 10
+    publish_date = datetime.now().strftime("%Y-%m-%dT")
+    for index, news in enumerate(upload_news_list):
+        text = '\n\n'.join(news[1:-1])
+        exc = '\n\n'.join(news[1:3])
+        publish_time = publish_date + f"18:{minutes}:00+08:00"
+        image_id, image_link = wordpress.upload_a_media_file(image_path=image_urls[index])
+        sleep(3)
+        response = wordpress.upload_a_post(title=news[0],
+                                           content=text,
+                                           excerpt=exc,
+                                           status='draft',
+                                           date=publish_time,
+                                           featured_media=int(image_id))
+        # print(response)
+        minutes = int(minutes) - 10
+        if minutes == 0:
+            minutes = "00"
+
+
+def upload_news_to_wechat(upload_news_list, number_of_news_to_upload):
+    def make_abstract(source):
+        temp = "\n".join(source[1:3])
+        # remove names in the parantheses
+        # Source: https://stackoverflow.com/questions/640001/how-can-i-remove-text-within-parentheses-with-a-regex
+        re.sub(r"\([^)]*\)", "", temp)
+        # re.sub(r'\（[^)]*\）', '', temp) Not working for Chinese characters
+        temp = temp[:115]
+        return temp
+
+    wc = Wechat()
+    try:
+        wc.start_the_system()
+        wc.enter_to_wechat()
+        wc.open_text_editor_from_home()
+
+        for index, news in enumerate(upload_news_list):
+            try:
+                abstract = make_abstract(news)
+                wc.daily_news_adder(
+                    news[0], news[-1], "", news[1:-1], abstract
+                )  # Title, news_url, image_url, content, abstract
+            except Exception as error:
+                print(error)
+                print("it happened around daily news")
+            wc.save()
+            sleep(3)
+
+            if index == number_of_news_to_upload - 1:
+                break
+            try:
+                wc.open_next_news()
+            except Exception as error:
+                print(error)
+                print("It happened when clicking next news")
+    finally:
+        return wc
 
 
 if __name__ == '__main__':

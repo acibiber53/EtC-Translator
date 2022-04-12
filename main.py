@@ -17,21 +17,15 @@ After making the exe file, one other file should be put into same directory:
 
 
 """
-
-from credentials import trello_upload_board_id
-from translating_engine import Translator, htm_to_urllist, translate_news
-from gdapi_controller import GoogleDriveAPIController as GDAPIC
-from trello_controller import TrelloController
-from wechat import Wechat
-from wordpress import WordpressController as WPC
-import time
 import os
 import PySimpleGUI as sg
-import re
-from newsapi_controller import NewsAPIController, selected_news_listing, get_all_news_about_turkey
-from uploading_engine import UploadingEngine
-import datetime
-import threading
+from translating_engine import htm_to_urllist, translate_news
+from newsapi_controller import selected_news_listing, get_all_news_about_turkey
+from uploading_engine import UploadingEngine, \
+    get_news_from_trello, \
+    sunday_collect_and_upload, \
+    upload_news_to_wordpress, \
+    upload_news_to_wechat
 
 DOC_PATH = os.path.expanduser("~\Downloads\exported-bookmarks.html")
 WIDTH = 1024
@@ -188,8 +182,8 @@ class EtcTranslatorForAll:
         self.upload_layout = [
             *title_maker("Uploader"),
             [sg.Text("Select upload Medium:")],
+            [sg.Checkbox("WordPress", default=True, key="-WORDPRESS UPLOAD-")],
             [sg.Checkbox("Wechat", default=True, key="-WECHAT UPLOAD-")],
-            [sg.Checkbox("WordPress", default=False, key="-WORDPRESS UPLOAD-")],
             [sg.Text("Selecting only WordPress will get the news from '在上传 - 只WP' list, any other selection will get "
                      "the news from '在上传'.")],
             [sg.Button("Show Upload Content", key="-UPLOAD REFRESH-")],
@@ -259,96 +253,6 @@ class EtcTranslatorForAll:
         self.window[target].update(visible=True)
         self.current_visible = target
 
-    def get_news_from_trello(self, target_list="在上传"):
-        def fix_descriptions_to_news_url(url_list):
-            tmp_list = list()
-            for desc in url_list:
-                info = desc.get("_value")
-                link = info[info.find("(") + 1:info.find(")")]
-                tmp_list.append(link)
-            return tmp_list
-
-        if self.trel is None:
-            self.trel = TrelloController(trello_upload_board_id, target_list)
-        else:
-            self.trel.set_target_board(trello_upload_board_id)
-            self.trel.set_target_list(target_list)
-
-        if self.gdapi is None:
-            self.gdapi = GDAPIC()
-
-        news_urls_to_upload = self.trel.get_all_urls_from_a_lists_attachments()
-        news_descs_to_upload = self.trel.get_all_descriptions_from_target_list()
-        self.news_source_urls_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
-
-        news_docs_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
-
-        for news_url in news_docs_urls_to_upload:
-            doc_id = self.gdapi.doc_id_from_url(news_url)
-            text = self.gdapi.get_a_documents_content(doc_id)  # text is a list
-            self.upload_news_list.append(text)
-        self.number_of_news_to_upload = len(self.upload_news_list)
-
-    def upload_news_to_wechat(self):
-        def make_abstract(source):
-            temp = "\n".join(source[1:3])
-            # remove names in the parantheses
-            # Source: https://stackoverflow.com/questions/640001/how-can-i-remove-text-within-parentheses-with-a-regex
-            re.sub(r"\([^)]*\)", "", temp)
-            # re.sub(r'\（[^)]*\）', '', temp) Not working for Chinese characters
-            temp = temp[:115]
-            return temp
-
-        self.wc.start_the_system()
-        self.wc.enter_to_wechat()
-        self.wc.open_text_editor_from_home()
-        for index, news in enumerate(self.upload_news_list):
-            try:
-                abstract = make_abstract(news)
-                self.wc.daily_news_adder(
-                    news[0], news[-1], "", news[1:-1], abstract
-                )  # Title, news_url, image_url, content, abstract
-            except Exception as error:
-                print(error)
-                print("it happened around daily news")
-            self.wc.save()
-            time.sleep(3)
-
-            if index == self.number_of_news_to_upload - 1:
-                break
-            try:
-                self.wc.open_next_news()
-            except Exception as error:
-                print(error)
-                print("It happened when clicking next news")
-
-        sg.popup("Everything is uploaded to Wechat!")
-        self.wc.close_browser()
-
-    def upload_news_to_wordpress(self, image_paths):
-        minutes = (self.number_of_news_to_upload * 10) - 10
-        publish_date = datetime.datetime.now().strftime("%Y-%m-%dT")
-        for index, news in enumerate(self.upload_news_list):
-            text = '\n\n'.join(news[1:-1])
-            exc = '\n\n'.join(news[1:3])
-            publish_time = publish_date + f"18:{minutes}:00+08:00"
-            image_id, image_link = self.wordpress.upload_a_media_file(image_path=image_paths[index])
-            time.sleep(3)
-            response = self.wordpress.upload_a_post(title=news[0], content=text, excerpt=exc, status='draft', date=publish_time, featured_media=int(image_id))
-            # print(response)
-            minutes = int(minutes) - 10
-            if minutes == 0:
-                minutes = "00"
-
-    def sunday_collect_and_upload(self):
-        self.wc.start_the_system()
-        self.wc.enter_to_wechat()
-        self.wc.get_news_links()
-        self.wc.title_image_text_extract()
-        self.wc.open_text_editor_from_home()
-        self.wc.add_weekly_news()
-        sg.Popup("Sunday Collector uploaded all news!")
-
     def main_loop(self):
         # This flag is not being reverted back, so it only works one way. Might create problems in the future
         selected_from_news_api = False
@@ -406,15 +310,12 @@ class EtcTranslatorForAll:
                 self.change_layout("-SUNDAY COLLECTOR-")
 
             if event == "-SCOL FETCH BUTTON-":
-                self.wc = Wechat()
                 if values.get("-JUST WEEKLY-"):
-                    self.sunday_collect_and_upload()
-                    pass
+                    sunday_collect_and_upload()
                 else:
                     # Do all together
                     pass
-
-                self.wc.close_browser()
+                sg.Popup("Sunday Collector uploaded all news!")
 
             if event == "-UPLOADER SBB-":
                 self.change_layout("-UPLOADER PAGE-")
@@ -425,9 +326,13 @@ class EtcTranslatorForAll:
                 self.window["-UPLOAD INFO-"].update("")
                 self.upen = UploadingEngine()
                 if not values.get("-WECHAT UPLOAD-") and values.get("-WORDPRESS UPLOAD-"):
-                    self.get_news_from_trello(target_list="在上传 - 只WP")
+                    a, b, c = get_news_from_trello(self.upload_news_list, target_list="在上传 - 只WP")
                 else:  # TODO The case where both options not been chosen should be added here
-                    self.get_news_from_trello()
+                    a, b, c = get_news_from_trello(self.upload_news_list)
+                self.upload_news_list = a
+                self.number_of_news_to_upload = b
+                self.news_source_urls_to_upload = c
+
                 for elem in self.upload_news_list:
                     self.print(elem[0])
 
@@ -435,20 +340,21 @@ class EtcTranslatorForAll:
                 # self.change_layout("-UPLOAD DURING-")
                 image_paths = self.upen.do_daily_download_for_images(self.news_source_urls_to_upload)
                 if values.get("-WORDPRESS UPLOAD-"):
-                    self.wordpress = WPC()
                     try:
-                        self.upload_news_to_wordpress(image_paths)
+                        upload_news_to_wordpress(image_paths,
+                                                 self.number_of_news_to_upload,
+                                                 self.upload_news_list,)
                     except Exception as error:
                         print(error)
                         print("Happened while uploading to the wordpress")
 
                 if values.get("-WECHAT UPLOAD-"):
-                    self.wc = Wechat()
-                    try:
-                        self.upload_news_to_wechat()
-                    except Exception as error:
-                        print(error)
-                        self.wc.close_browser()
+                    # I needed to send wechat controller back because popup should stop you from closing the page,
+                    # sometimes wechat doesn't upload properly, and you need to see it change something before closing,
+                    # everything down.
+                    wc = upload_news_to_wechat(self.upload_news_list, self.number_of_news_to_upload)
+                    sg.popup("Everything is uploaded to Wechat!")
+                    wc.close_browser()
 
         self.window.close()
 
