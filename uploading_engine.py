@@ -1,3 +1,4 @@
+import unicodedata
 from news_outlets_xpaths import image_paths
 from lxml import etree, html
 from lxml.html import tostring, html5parser
@@ -50,8 +51,9 @@ class UploadingEngine:
         for news_url in self.news_urllist:
             news_outlet = find_news_outlet(news_url)
             img_xpath = image_paths.get(news_outlet)
-            # print(news_url)
-            # print(img_xpath)
+            print(news_url)
+            print(news_outlet)
+            print(img_xpath)
             if not img_xpath:
                 print(f"Couldn't find your news outlet:{news_outlet}")
                 img_xpath = "//img[1]/@src"
@@ -63,11 +65,13 @@ class UploadingEngine:
                 "connection": "keep-alive"
             }
             html_content = requests.get(news_url, headers=headers).content
+            # new_str = unicodedata.normalize("NFKD", html_content)
+            # print(html_content)
             html_parser = html.HTMLParser()
             tree = etree.HTML(html_content, html_parser)
             # print(etree.tostring(tree, pretty_print=True))
             data = tree.xpath(img_xpath)
-            # print(data)
+            print(data)
             try:
                 data = data[0]
             except IndexError:
@@ -187,7 +191,7 @@ def upload_news_to_wechat(upload_news_list, number_of_news_to_upload):
                 print(error)
                 print("it happened around daily news")
             wc.save()
-            sleep(3)
+            sleep(10)
 
             if index == number_of_news_to_upload - 1:
                 break
@@ -221,4 +225,5 @@ if __name__ == '__main__':
     """
 
     UE = UploadingEngine()
-    UE.do_daily_download_for_images(["https://ahvalnews.com/turkish-lira/foreigners-can-invest-turkeys-dollar-linked-lira-deposits"])
+    UE.do_daily_download_for_images(["https://www.reuters.com/world/turkey-says-situation-ukraine-worsening-turkish-air-space-remain-open-2022-03-04/",
+                                     "https://www.turkishminute.com/2022/04/12/ays-remarks-of-national-swimmer-accused-of-insulting-erdogan-is-free-speech/"])

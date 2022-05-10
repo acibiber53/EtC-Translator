@@ -459,7 +459,7 @@ def translate_news(t_engine, url_list, printing_func, window):
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://ahvalnews.com/decree-laws/not-traitor-says-purged-police-officer-suicide-note"
+    url = "https://www.trtworld.com/turkey/erdogan-t%C3%BCrkiye-will-never-force-syrians-out-of-country-56995"
 
     try:
         trans.translate_main(url)

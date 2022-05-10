@@ -7,7 +7,7 @@ image_paths = {
     "apnews": "//meta[@property='twitter:image']/@content",
     "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
     "ahvalnews": "//div[@class='field-content']",
-    "turkishminute": "//div[@class='td-post-featured-image']/a/@href",
+    "turkishminute": "//img/@src",
     "duvarenglish": "//meta[@property='og:image']/@content",
     "aa": "//meta[@name='twitter:image:src']/@content",
     "hurriyetdailynews": "//div[@class='content']/img/@data-src",
@@ -27,7 +27,7 @@ headers = {
     "aa": "//div[@class='detay-spot-category']/h1",
     "hurriyetdailynews": "//div[@class='content']/h1",
     "dailysabah": "//h1[@class='main_page_title']",
-    "trtwold": "//h1[@class='article-title']",
+    "trtworld": "//h1[@class='article-title']",
     "nordicmonitor": "//div[@class='entry-header']/h1",
 }
 
@@ -41,6 +41,6 @@ bodies = {
     "aa": "//div[@class='detay-icerik']/div[1]/p",
     "hurriyetdailynews": "//div[@class='content']/p",
     "dailysabah": "//div[@class='article_body']/p",
-    "trtworld": "//div[@class='contentBox.bg-w.noMedia']/p",
+    "trtworld": "//div[@class='col-xs-12 col-md-8 article-body']/div[2]/p",
     "nordicmonitor": "//div[@class='content-inner ']/p",
 }
