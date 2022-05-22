@@ -311,11 +311,12 @@ class EtcTranslatorForAll:
 
             if event == "-SCOL FETCH BUTTON-":
                 if values.get("-JUST WEEKLY-"):
-                    sunday_collect_and_upload()
+                    wc = sunday_collect_and_upload()
                 else:
                     # Do all together
                     pass
                 sg.Popup("Sunday Collector uploaded all news!")
+                wc.close_browser()
 
             if event == "-UPLOADER SBB-":
                 self.change_layout("-UPLOADER PAGE-")

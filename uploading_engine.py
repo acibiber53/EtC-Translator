@@ -121,9 +121,8 @@ class UploadingEngine:
 
 
 def get_news_from_trello(upload_news_list, target_list="在上传"):
-    news_source_urls_to_upload, news_docs_urls_to_upload = get_news_to_upload_from_trello_list()
+    news_source_urls_to_upload, news_docs_urls_to_upload = get_news_to_upload_from_trello_list(target_list)
     gdapi = GDAPIC()
-
     for news_url in news_docs_urls_to_upload:
         doc_id = gdapi.doc_id_from_url(news_url)
         text = gdapi.get_a_documents_content(doc_id)  # text is a list
@@ -140,7 +139,8 @@ def sunday_collect_and_upload():
     wc.title_image_text_extract()
     wc.open_text_editor_from_home()
     wc.add_weekly_news()
-    wc.close_browser()
+    return wc
+    # Don't forget to close the browser after return
 
 
 def upload_news_to_wordpress(image_urls, number_of_news_to_upload, upload_news_list):
@@ -190,8 +190,7 @@ def upload_news_to_wechat(upload_news_list, number_of_news_to_upload):
             except Exception as error:
                 print(error)
                 print("it happened around daily news")
-            wc.save()
-            sleep(10)
+            wc.save(10)
 
             if index == number_of_news_to_upload - 1:
                 break

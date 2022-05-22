@@ -186,6 +186,9 @@ def get_news_to_upload_from_trello_list(target_list="在上传"):
     news_descs_to_upload = trel.get_all_descriptions_from_target_list()
     news_source_urls_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
 
+    if not news_urls_to_upload:
+        print("You maybe haven't put the news into 在上传 list.")
+
     news_docs_urls_to_upload = [elem for elem in news_urls_to_upload if "google" in elem]
 
     return news_source_urls_to_upload, news_docs_urls_to_upload

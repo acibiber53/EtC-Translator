@@ -244,9 +244,10 @@ class Wechat:
             self.ueditor.add_one_news_for_weekly(
                 row[0], row[1], row[2], "".join(row[3].split())
             )
-        self.ueditor.add_before_weeklies_title()
+            sleep(3)
+        # self.ueditor.add_before_weeklies_title()
         self.ueditor.add_end_qr()
-        self.save()
+        self.save(10)
 
     @sleeper(1)
     def daily_news_adder(
@@ -292,9 +293,10 @@ class Wechat:
         print("Clicked")
 
     @sleeper(2)
-    def save(self):
+    def save(self, seconds):
         save_element = self.driver.find_element_by_id("js_submit")
         save_element.click()
+        sleep(seconds)
 
     @sleeper(1)
     def print_links(self):
