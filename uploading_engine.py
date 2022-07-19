@@ -199,6 +199,9 @@ def upload_news_to_wechat(upload_news_list, number_of_news_to_upload):
             except Exception as error:
                 print(error)
                 print("It happened when clicking next news")
+    except Exception as error:
+        print(error)
+        print("It happened while trying to upload to wechat")
     finally:
         return wc
 

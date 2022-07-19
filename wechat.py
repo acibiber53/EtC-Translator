@@ -76,9 +76,11 @@ class Wechat:
         This method opens a Chrome webdriver
         :return: webdriver
         """
-        # TODO Use a package manager for ChromeDriver
         options = webdriver.ChromeOptions()
         options.add_argument("start-maximized")
+        # TODO Introduce profile selecting at the settings.
+        # options.add_argument("--user-data-dir=C:\\Users\\acibi\\AppData\\Local\\Google\\Chrome\\User Data")
+        # options.add_argument('--profile-directory=Profile 13')
         driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         return driver
 
