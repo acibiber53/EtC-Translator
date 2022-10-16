@@ -210,7 +210,7 @@ class Wechat:
             return
         try:
             text_editor = self.driver.find_element_by_xpath(
-                "//div[@class='new-creation__menu']/div[1]"
+                "//div[@class='new-creation__menu']/div[2]"
             )
         except sce.NoSuchElementException:
             self.driver.get("https://mp.weixin.qq.com/")
@@ -220,7 +220,7 @@ class Wechat:
                 )
             )
             text_editor = self.driver.find_element_by_xpath(
-                "//div[@class='new-creation__menu']/div[1]"
+                "//div[@class='new-creation__menu']/div[2]"
             )
 
         text_editor.click()
