@@ -105,10 +105,10 @@ class UEditorControl:
     def add_daily_news(self, img_url="", text=["这里应该有个内容", "里面会有一些新闻"]):
         self.add_follow_header()
         self.add_blank_line()
-        self.add_an_image(img_url)
+        # self.add_an_image(img_url)
         sleep(0.5)
         for par in text:
-            self.add_blank_line()
+            # self.add_blank_line()
             self.add_a_paragraph(par)
             sleep(0.5)
         self.add_blank_line()
