@@ -36,10 +36,8 @@ class UploadingEngine:
             elif news_outlet == 'ahvalnews':
                 image_link = "https://ahvalnews.com" + source_link
             elif news_outlet == 'trtworld':
-                tmp = source_link.split("/")
-                tmp[3] = "w960"
-                tmp[4] = "q75"
-                image_link = "/".join(tmp)
+                if "https" not in source_link:
+                    image_link = "https://www.trtworld.com" + source_link
             elif news_outlet == "hurriyetdailynews":
                 image_link = "https:" + source_link
             else:
@@ -77,9 +75,13 @@ class UploadingEngine:
             except IndexError:
                 print("Couldn't find the image for this link. Make sure the link has image, otherwise an empty string will be passed as a substitute.")
                 print(news_url)
-                data = ""
+                data = tree.xpath("//img[1]/@src")
+                data = data[0]
+
             img_link = proper_linkify(data, news_outlet)
+
             images_links.append(img_link)
+            print("At the end!")
         return images_links
 
     def persist_image(self, folder_path, url):
@@ -116,6 +118,7 @@ class UploadingEngine:
     def do_daily_download_for_images(self, news_list):
         self.news_urllist = news_list
         test_image_urls = self.find_images_for_news_to_upload()
+        print("Passed first one!")
         file_paths = self.download_daily_images(test_image_urls)
         return file_paths
 

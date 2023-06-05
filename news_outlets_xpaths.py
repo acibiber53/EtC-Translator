@@ -11,8 +11,8 @@ image_paths = {
     "duvarenglish": "//meta[@property='og:image']/@content",
     "aa": "//meta[@name='twitter:image:src']/@content",
     "hurriyetdailynews": "//div[@class='content']/img/@data-src",
-    "dailysabah": "//div[@class='article_top_image_widget']/div/a/@href",
-    "trtworld": "//figure[@class='content-image']/img/@src",
+    "dailysabah": "//div[@class='image_holder ']/a/div[1]/img/@src",
+    "trtworld": "//figure[@class='Picture']/picture/img/@src",
     "nordicmonitor": "//div[@class='jeg_inner_content']/div/a/@href",
     "stockholmcf": "//div[@class='td-post-featured-image']/a/@href",
 }
@@ -41,6 +41,6 @@ bodies = {
     "aa": "//div[@class='detay-icerik']/div[1]/p",
     "hurriyetdailynews": "//div[@class='content']/p",
     "dailysabah": "//div[@class='article_body']/p",
-    "trtworld": "//div[@class='col-xs-12 col-md-8 article-body']/div[2]/p",
+    "trtworld": "//div[@class='Article-List']/p",
     "nordicmonitor": "//div[@class='content-inner ']/p",
 }

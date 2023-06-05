@@ -113,10 +113,10 @@ class Wechat:
 
         self.driver.find_element_by_link_text("登录").click()
 
-        print("Scan the QR code please! You have 1 minute. ")
+        print("Scan the QR code please! You have 3 minutes. ")
         # Wait until QR scan
         try:
-            wait_elem = WebDriverWait(self.driver, 60).until(
+            wait_elem = WebDriverWait(self.driver, 180).until(
                 EC.presence_of_element_located(
                     (By.CLASS_NAME, "weui-desktop-panel__hd")
                 )
@@ -233,6 +233,53 @@ class Wechat:
         self.ueditor = UEditorControl(self.driver)
         print("Text Editor fully opened!")
 
+    @sleeper(3)
+    def open_post_records(self):
+        if self.sys_start_check():
+            return
+
+        if self.log_check():
+            return
+
+        try:
+            post_records = self.driver.find_element_by_xpath(
+                "//a[@title='发表记录']"
+            )
+        except sce.NoSuchElementException:
+            self.driver.get("https://mp.weixin.qq.com/")
+            wait_elem = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "weui-desktop-panel__hd")
+                )
+            )
+            post_records = self.driver.find_element_by_xpath(
+                "//a[@title='发表记录']"
+            )
+
+        post_records.click()
+        wait_elem = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "publish_history_page"))
+        )
+        print("Post Records are fully open!")
+
+    @sleeper(2)
+    def get_post_statistics(self):
+        news_blocks = self.driver.find_elements_by_xpath("//div[@class='weui-desktop-block']")
+        for news_block in news_blocks:
+            news = news_block.find_elements_by_xpath("//div[@class='publish_hover_content']")
+            day_time = ""
+            for each_news in news:
+                time = each_news.find_element_by_xpath("//em[@class='weui-desktop-mass__time']").text.strip()
+                if time:
+                    day_time = time
+                else:
+                    time = day_time
+                print(time)
+                image_element = each_news.find_element_by_xpath("//i[@class='weui-desktop-mass-appmsg__thumb']")
+                image_style = image_element.get_attribute('style')
+
+
+
     @sleeper(1)
     def add_weekly_news(self):
         self.ueditor.add_follow_header()
@@ -293,6 +340,7 @@ class Wechat:
         click_action = ActionChains(self.driver).click(element_to_click)
         click_action.perform()
         print("Clicked")
+        sleep(2)
 
     @sleeper(2)
     def save(self, seconds):
