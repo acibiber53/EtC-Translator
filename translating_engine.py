@@ -283,7 +283,8 @@ class Translator:
         text = text.replace(":", "：")
         text = text.replace('"', '”')
         text = text.replace("'", "’")
-        text = text.replace(".", "。")
+        text = re.sub(r"/(?<!\d)[.]/g", "。", text)
+        text = text.replace(",", "，")
         return text
 
     def fix_translation(self, text):
@@ -523,7 +524,7 @@ def translate_news(t_engine, url_list, printing_func, window):
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://stockholmcf.org/turkey-issued-detention-warrants-for-92-people-over-alleged-gulen-links-in-a-week/"
+    url = "https://www.reuters.com/markets/rates-bonds/analysts-bet-bumper-turkish-rate-hikes-way-2023-06-13/"
 
     try:
         trans.translate_main(url)
