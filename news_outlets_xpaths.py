@@ -12,7 +12,7 @@ image_paths = {
     "aa": "//meta[@name='twitter:image:src']/@content",
     "hurriyetdailynews": "//div[@class='content']/img/@data-src",
     "dailysabah": "//div[@class='image_holder ']/a/div[1]/img/@src",
-    "trtworld": "//figure[@class='Picture']/picture/img/@src",
+    "trtworld": "//div[@class='image']//source/@data-srcset",
     "nordicmonitor": "//div[@class='jeg_inner_content']/div/a/@href",
     "stockholmcf": "//div[@class='td-post-featured-image']/a/@href",
 }
@@ -41,6 +41,20 @@ bodies = {
     "aa": "//div[@class='detay-icerik']/div[1]/p",
     "hurriyetdailynews": "//div[@class='content']/p",
     "dailysabah": "//div[@class='article_body']/p",
-    "trtworld": "//div[@class='Article-List']/p",
+    "trtworld": "//div[@class='Article-List']/div/div/div/p",
     "nordicmonitor": "//div[@class='content-inner ']/p",
+}
+
+outlet_chinese_names = {
+    "reuters": "路透社",
+    "apnews": "美联社",
+    "aljazeera": "《半岛电视台》",
+    "ahvalnews": "Ahval新闻",
+    "turkishminute": "土耳其分钟",
+    "duvarenglish": "《墙报》",
+    "aa": "阿纳多卢通讯社",
+    "hurriyetdailynews": "《自由报》",
+    "dailysabah": "《每日晨报》",
+    "trtworld": "TRTWorld ",
+    "nordicmonitor": "北欧观察 ",
 }

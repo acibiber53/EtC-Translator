@@ -326,8 +326,9 @@ class EtcTranslatorForAll:
                 self.upload_news_list = list()
                 self.window["-UPLOAD INFO-"].update("")
                 self.upen = UploadingEngine()
-                if not values.get("-WECHAT UPLOAD-") and values.get("-WORDPRESS UPLOAD-"):
-                    a, b, c = get_news_from_trello(self.upload_news_list, target_list="在上传 - 只WP")
+                if not values.get("-WECHAT UPLOAD-") and not values.get("-WORDPRESS UPLOAD-"):
+                    sg.popup("Please select an option to continue!")
+                    continue
                 else:  # TODO The case where both options not been chosen should be added here
                     a, b, c = get_news_from_trello(self.upload_news_list)
                 self.upload_news_list = a
@@ -339,12 +340,16 @@ class EtcTranslatorForAll:
 
             if event == "-UPLOAD BUTTON-":
                 # self.change_layout("-UPLOAD DURING-")
+                if self.number_of_news_to_upload == 0:
+                    sg.popup("Please click 'Show Upload Content' button first, in order to start Uploading!")
+                    continue
                 image_paths = self.upen.do_daily_download_for_images(self.news_source_urls_to_upload)
                 if values.get("-WORDPRESS UPLOAD-"):
                     try:
                         upload_news_to_wordpress(image_paths,
                                                  self.number_of_news_to_upload,
                                                  self.upload_news_list,)
+                        sg.popup("Everything is uploaded to Wordpress!")
                     except Exception as error:
                         print(error)
                         print("Happened while uploading to the wordpress")

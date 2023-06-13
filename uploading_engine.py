@@ -38,6 +38,8 @@ class UploadingEngine:
             elif news_outlet == 'trtworld':
                 if "https" not in source_link:
                     image_link = "https://www.trtworld.com" + source_link
+                else:
+                    image_link = source_link
             elif news_outlet == "hurriyetdailynews":
                 image_link = "https:" + source_link
             else:
@@ -58,7 +60,7 @@ class UploadingEngine:
 
             headers = {
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
-                "accept-encoding": "gzip, deflate, br",
+                "accept-encoding": "identity",
                 "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                 "connection": "keep-alive"
             }
@@ -230,5 +232,4 @@ if __name__ == '__main__':
     """
 
     UE = UploadingEngine()
-    UE.do_daily_download_for_images(["https://www.reuters.com/world/turkey-says-situation-ukraine-worsening-turkish-air-space-remain-open-2022-03-04/",
-                                     "https://www.turkishminute.com/2022/04/12/ays-remarks-of-national-swimmer-accused-of-insulting-erdogan-is-free-speech/"])
+    UE.do_daily_download_for_images(["https://www.trtworld.com/turkiye/erdogan-proposes-intl-probe-on-dam-collapse-in-calls-with-zelenskyy-putin-13528821"])

@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from news import News
 import logging
 from fake_useragent import UserAgent
-from news_outlets_xpaths import headers, bodies
+from news_outlets_xpaths import headers, bodies, outlet_chinese_names
 from bs4 import BeautifulSoup
 from trello_controller import create_card_with_trello, TrelloController, upload_daily_news_to_trello
 from gdapi_controller import GoogleDriveAPIController as GDAPI
@@ -272,6 +272,51 @@ class Translator:
         elif self.preferred_translation_engine == "baidu":
             return self.translate_with_baidu()
 
+    def fix_non_chinese_chars(self, text):
+        """
+        This method fixes non-chinese punctuation marks right after the translation finishes.
+        :param text:
+        :return:
+        """
+        text = text.replace("(", "（")
+        text = text.replace(")", "）")
+        text = text.replace(":", "：")
+        text = text.replace('"', '”')
+        text = text.replace("'", "’")
+        text = text.replace(".", "。")
+        return text
+
+    def fix_translation(self, text):
+        """
+        This method gets in the translated text and does some last minute changes to it.
+        :param text:
+        :return:
+        """
+        text = text.replace("图尔基耶", "土耳其")
+        text = text.replace("Turkiye", "土耳其")
+        text = text.replace("伊斯坦堡", "伊斯坦布尔")
+        text = text.replace("卫生防护中心", "共和人民党")
+        text = text.replace("Imamoglu", "伊马毛卢")
+        text = text.replace("Kilicdaroglu", "克勒赤达罗卢")
+        text = text.replace("基利奇达罗格鲁", "克勒赤达罗卢")
+        text = text.replace("辛塞克", "希姆谢克")
+        text = text.replace("IYI党", "好党")
+        return text
+
+    def add_chinese_news_outlet(self):
+        """
+        This method adds the line below to the very beginning of the text translation. Its format can be changed later
+        on.
+        据《某个通讯社》几月几日消息，
+        :return:
+        """
+        if outlet_chinese_names.get(self.current_news.news_outlet):
+            outlet_to_add = outlet_chinese_names.get(self.current_news.news_outlet)
+        else:
+            outlet_to_add = "UNKNOWN NEWS OUTLET"
+        text_to_add = "\n据" + outlet_to_add + str(date.today().month) + "月" + str(date.today().day) + "日消息，"
+        self.current_news.body_chinese = text_to_add + self.current_news.body_chinese
+
     def translate(self):
         """
             Main translation method. It receives full text from current_news variable, then pastes it to
@@ -284,6 +329,8 @@ class Translator:
         """
 
         output = self.translation_engine_selector()
+        output = self.fix_non_chinese_chars(output)
+        output = self.fix_translation(output)
 
         self.current_news.length_chinese = len(output)
         logging.debug(f"Original output is like this:\n{output}")
@@ -291,6 +338,7 @@ class Translator:
         all_translation = output.split("\n")
         self.current_news.title_chinese = all_translation[0]
         self.current_news.body_chinese = "\n".join(all_translation[1:])
+        self.add_chinese_news_outlet()
         logging.debug(f"Translated chinese title is: {self.current_news.title_chinese}")
         logging.debug(f"Translated chinese body is: {self.current_news.body_chinese}")
 
@@ -344,6 +392,21 @@ class Translator:
                 webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             except sce.NoSuchElementException as error:
                 print(error)
+    def fix_turkish_characters(self):
+        text = self.current_news.full_text_english
+        text = text.replace("İ", "I")
+        text = text.replace("ı", "i")
+        text = text.replace("Ç", "C")
+        text = text.replace("ç", "c")
+        text = text.replace("Ğ", "G")
+        text = text.replace("ğ", "g")
+        text = text.replace("Ö", "O")
+        text = text.replace("ö", "o")
+        text = text.replace("Ş", "S")
+        text = text.replace("ş", "s")
+        text = text.replace("Ü", "U")
+        text = text.replace("ü", "u")
+        self.current_news.full_text_english = text
 
     def translate_main(self, link):
         self.current_news = News(link)
@@ -359,6 +422,7 @@ class Translator:
         self.current_news.news_outlet = self.find_news_outlet(self.current_news.source_link)
         self.popup_check()
         self.parse_link()
+        self.fix_turkish_characters()
         self.translate()
         self.output_news()
         self.news_uploaded.append(self.current_news)
@@ -459,7 +523,7 @@ def translate_news(t_engine, url_list, printing_func, window):
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://www.turkishminute.com/2022/07/19/home-sales-to-foreigners-in-turkey-skyrocketed-in-june/"
+    url = "https://stockholmcf.org/turkey-issued-detention-warrants-for-92-people-over-alleged-gulen-links-in-a-week/"
 
     try:
         trans.translate_main(url)
