@@ -283,7 +283,7 @@ class Translator:
         text = text.replace(":", "：")
         text = text.replace('"', '”')
         text = text.replace("'", "’")
-        text = re.sub(r"/(?<!\d)[.]/g", "。", text)
+        text = re.sub(r"/(?<!\d)[.]/g", "。", text) # This line checks if there is a digit before the dot, then changes it.
         text = text.replace(",", "，")
         return text
 

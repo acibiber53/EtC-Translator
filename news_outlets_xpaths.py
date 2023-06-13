@@ -32,7 +32,7 @@ headers = {
 }
 
 bodies = {
-    "reuters": "//p",
+    "reuters": "//p|//h2",
     "apnews": "//div[@class='Article']/p",
     "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
     "ahvalnews": "//div[@class='field--item']/div/div/p",
