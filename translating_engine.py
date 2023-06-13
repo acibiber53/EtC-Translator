@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions as sce
 from time import sleep, time
-from datetime import date
+from datetime import date, timedelta
 import re
 from docx import Document
 import os
@@ -315,7 +315,8 @@ class Translator:
             outlet_to_add = outlet_chinese_names.get(self.current_news.news_outlet)
         else:
             outlet_to_add = "UNKNOWN NEWS OUTLET"
-        text_to_add = "\n据" + outlet_to_add + str(date.today().month) + "月" + str(date.today().day) + "日消息，"
+        yesterday = date.today() - timedelta(days=1)
+        text_to_add = "\n据" + outlet_to_add + str(yesterday.month) + "月" + str(yesterday.day) + "日消息，"
         self.current_news.body_chinese = text_to_add + self.current_news.body_chinese
 
     def translate(self):
