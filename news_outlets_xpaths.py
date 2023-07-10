@@ -19,7 +19,7 @@ image_paths = {
 
 headers = {
     "reuters": "//h1",
-    "apnews": "//div[@class='CardHeadline']/div[1]/h1",
+    "apnews": "//h1[@class='Page-headline']",
     "aljazeera": "//header[@class='article-header']/h1",
     "ahvalnews": "//section[@class='col-sm-12']/div/div/div[3]/div[1]/h1",
     "turkishminute": "//h1[@class='tdb-title-text']",
@@ -33,7 +33,7 @@ headers = {
 
 bodies = {
     "reuters": "//p|//h2",
-    "apnews": "//div[@class='Article']/p",
+    "apnews": "//div[@class='RichTextStoryBody RichTextBody']/p",
     "aljazeera": "//div[@class='l-col.l-col--8']/div[2]/*[self::p or self::h2]",
     "ahvalnews": "//div[@class='field--item']/div/div/p",
     "turkishminute": "//div[@class='tdb-block-inner td-fix-index']/p",

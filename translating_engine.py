@@ -525,7 +525,7 @@ def translate_news(t_engine, url_list, printing_func, window):
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://www.reuters.com/markets/rates-bonds/analysts-bet-bumper-turkish-rate-hikes-way-2023-06-13/"
+    url = "https://apnews.com/article/turkey-ukraine-nato-membership-a28b98c2491de751285786622d61a934"
 
     try:
         trans.translate_main(url)
