@@ -177,12 +177,21 @@ def get_news_to_upload_from_trello_list(target_list="在上传"):
         for desc in url_list:
             info = desc.get("_value")
             link = info[info.find("(") + 1:info.find(")")]
+            link = link.replace(' "\u200c"', '')
             tmp_list.append(link)
+        return tmp_list
+
+    def fix_drive_urls(url_list):
+        tmp_list = list()
+        for url in url_list:
+            url = url.replace("/edit?usp=drivesdk", "")
+            tmp_list.append(url)
         return tmp_list
 
     trel = TrelloController(trello_upload_board_id, target_list)
 
     news_urls_to_upload = trel.get_all_urls_from_a_lists_attachments()
+    news_urls_to_upload = fix_drive_urls(news_urls_to_upload)
     news_descs_to_upload = trel.get_all_descriptions_from_target_list()
     news_source_urls_to_upload = fix_descriptions_to_news_url(news_descs_to_upload)
 
