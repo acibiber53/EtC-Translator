@@ -88,15 +88,10 @@ class Wechat:
     def open_submit(self):
         # Sometimes the website opens QR login, this is to change it into username-password login
         try:
-            if EC.presence_of_element_located((By.LINK_TEXT, "使用帐号登录"))(self.driver):
-                try:
-                    self.driver.find_element_by_link_text("使用帐号登录").click()
-                except sce.ElementClickInterceptedException:
-                    print(
-                        "There is something on the place we need to click. Please make it clickable!"
-                    )
-        except sce.NoSuchElementException:
-            print("Maybe page is not open yet?")
+            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.LINK_TEXT, "使用账号登录"))).click()
+        except Exception as error:
+            print(error)
+            print("It happened while trying to open the submit part of Wechat")
 
     @sleeper(2)
     def enter_to_wechat(self):
