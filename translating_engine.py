@@ -109,8 +109,11 @@ class Translator:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 
+        # Added version to ChromeDriverManager, as the changes to version url as of 2023.07.19 made it stop working.
+        # Also, for every other library we are using old versions, why were we using new ChromeDriver each time?
+        # Possible Answer: Because of websites' user agent detection?
         try:
-            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+            driver = webdriver.Chrome(ChromeDriverManager(version="114.0.5735.90").install(), options=options)
         except sce.SessionNotCreatedException as error:
             print(error)
             os.system("pause")
