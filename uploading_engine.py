@@ -15,6 +15,8 @@ from trello_controller import get_news_to_upload_from_trello_list
 from gdapi_controller import GoogleDriveAPIController as GDAPIC
 from wordpress import WordpressController as WPC
 from wechat import Wechat
+import shutil
+
 
 
 class UploadingEngine:
@@ -83,16 +85,23 @@ class UploadingEngine:
             img_link = proper_linkify(data, news_outlet)
 
             images_links.append(img_link)
-            print("At the end!")
+            # print("At the end!")
         return images_links
 
     def persist_image(self, folder_path, url):
         file_path = ""
+        # print("Getting the image")
         try:
-            image_content = requests.get(url).content
+            headers = {
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+                "accept-encoding": "identity",
+                "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "connection": "keep-alive"
+            }
+            image_content = requests.get(url, headers=headers, stream=True).content
         except Exception as e:
             print(f"ERROR - Could not download {url} - {e}")
-
+        # print("Got image content")
         try:
             image_file = BytesIO(image_content)
             image = Image.open(image_file).convert('RGB')
@@ -120,8 +129,9 @@ class UploadingEngine:
     def do_daily_download_for_images(self, news_list):
         self.news_urllist = news_list
         test_image_urls = self.find_images_for_news_to_upload()
-        print("Passed first one!")
+        # print("Passed first one!")
         file_paths = self.download_daily_images(test_image_urls)
+        # print("Downloaded images")
         return file_paths
 
 
@@ -213,9 +223,7 @@ def upload_news_to_wechat(upload_news_list, number_of_news_to_upload):
 
 if __name__ == '__main__':
     test_urls =[
-    "https://www.hurriyetdailynews.com/hablemitoglu-assassination-suspect-brought-to-turkey-171086",
-        "https://www.aa.com.tr/en/culture/turkish-cultural-institute-commemorates-poet-yunus-emre/2524496",
-
+    "https://www.aa.com.tr/en/turkiye/chinas-embassy-in-turkiye-commemorates-96th-army-day/2958738",
                ]
 
     test_links = """
@@ -232,4 +240,5 @@ if __name__ == '__main__':
     """
 
     UE = UploadingEngine()
-    UE.do_daily_download_for_images(["https://www.trtworld.com/turkiye/erdogan-proposes-intl-probe-on-dam-collapse-in-calls-with-zelenskyy-putin-13528821"])
+    # prints file path
+    print(UE.do_daily_download_for_images(["https://www.aa.com.tr/en/turkiye/chinas-embassy-in-turkiye-commemorates-96th-army-day/2958738"]))
