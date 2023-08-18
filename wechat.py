@@ -83,7 +83,7 @@ class Wechat:
         # options.add_argument('--profile-directory=Profile 13')
         # Added version to pass through the issue of 2023.07.19
         # Github link for the issue: https://github.com/SergeyPirogov/webdriver_manager/issues/536
-        driver = webdriver.Chrome(ChromeDriverManager(version="114.0.5735.90").install(), options=options)
+        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         return driver
 
     @sleeper(2)
