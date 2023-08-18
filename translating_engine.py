@@ -113,7 +113,7 @@ class Translator:
         # Also, for every other library we are using old versions, why were we using new ChromeDriver each time?
         # Possible Answer: Because of websites' user agent detection?
         try:
-            driver = webdriver.Chrome(ChromeDriverManager(version="114.0.5735.90").install(), options=options)
+            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         except sce.SessionNotCreatedException as error:
             print(error)
             os.system("pause")
