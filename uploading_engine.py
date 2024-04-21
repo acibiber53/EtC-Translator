@@ -18,7 +18,6 @@ from wechat import Wechat
 import shutil
 
 
-
 class UploadingEngine:
     def __init__(self, urllist=""):
         self.news_urllist = urllist
@@ -35,9 +34,9 @@ class UploadingEngine:
         def proper_linkify(source_link, news_outlet):
             if source_link is False:
                 return ""
-            elif news_outlet == 'ahvalnews':
+            elif news_outlet == "ahvalnews":
                 image_link = "https://ahvalnews.com" + source_link
-            elif news_outlet == 'trtworld':
+            elif news_outlet == "trtworld":
                 if "https" not in source_link:
                     image_link = "https://www.trtworld.com" + source_link
                 else:
@@ -63,8 +62,8 @@ class UploadingEngine:
             headers = {
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
                 "accept-encoding": "identity",
-                "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "connection": "keep-alive"
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "connection": "keep-alive",
             }
             html_content = requests.get(news_url, headers=headers).content
             # new_str = unicodedata.normalize("NFKD", html_content)
@@ -77,10 +76,18 @@ class UploadingEngine:
             try:
                 data = data[0]
             except IndexError:
-                print("Couldn't find the image for this link. Make sure the link has image, otherwise an empty string will be passed as a substitute.")
+                print(
+                    "Couldn't find the image for this link. Make sure the link has image, otherwise an empty string will be passed as a substitute."
+                )
                 print(news_url)
                 data = tree.xpath("//img[1]/@src")
-                data = data[0]
+                try:
+                    data = data[0]
+                except:
+                    print(
+                        "Page doesn't have any images. Making a random image as the normal image."
+                    )
+                    data = "https://mmbiz.qpic.cn/mmbiz_jpg/NbdIoiaT5xuGF1aX9yDxuEPqicw8j0cLoY5M94qzt27If77zZabRlqLLglyMtafwlbW9lT4bcfPdVBwf5Hl06QpA/"
 
             img_link = proper_linkify(data, news_outlet)
 
@@ -95,8 +102,8 @@ class UploadingEngine:
             headers = {
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
                 "accept-encoding": "identity",
-                "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                "connection": "keep-alive"
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "connection": "keep-alive",
             }
             image_content = requests.get(url, headers=headers, stream=True).content
         except Exception as e:
@@ -104,9 +111,11 @@ class UploadingEngine:
         # print("Got image content")
         try:
             image_file = BytesIO(image_content)
-            image = Image.open(image_file).convert('RGB')
-            file_path = os.path.join(folder_path, hashlib.sha1(image_content).hexdigest()[:10] + '.jpg')
-            with open(file_path, 'wb') as f:
+            image = Image.open(image_file).convert("RGB")
+            file_path = os.path.join(
+                folder_path, hashlib.sha1(image_content).hexdigest()[:10] + ".jpg"
+            )
+            with open(file_path, "wb") as f:
                 image.save(f, "JPEG", quality=85)
             print(f"SUCCESS - saved {url} - as {file_path}")
         except Exception as e:
@@ -136,7 +145,10 @@ class UploadingEngine:
 
 
 def get_news_from_trello(upload_news_list, target_list="在上传"):
-    news_source_urls_to_upload, news_docs_urls_to_upload = get_news_to_upload_from_trello_list(target_list)
+    (
+        news_source_urls_to_upload,
+        news_docs_urls_to_upload,
+    ) = get_news_to_upload_from_trello_list(target_list)
     gdapi = GDAPIC()
     for news_url in news_docs_urls_to_upload:
         doc_id = gdapi.doc_id_from_url(news_url)
@@ -163,17 +175,21 @@ def upload_news_to_wordpress(image_urls, number_of_news_to_upload, upload_news_l
     minutes = (number_of_news_to_upload * 10) - 10
     publish_date = datetime.now().strftime("%Y-%m-%dT")
     for index, news in enumerate(upload_news_list):
-        text = '\n\n'.join(news[1:-1])
-        exc = '\n\n'.join(news[1:3])
+        text = "\n\n".join(news[1:-1])
+        exc = "\n\n".join(news[1:3])
         publish_time = publish_date + f"18:{minutes}:00+08:00"
-        image_id, image_link = wordpress.upload_a_media_file(image_path=image_urls[index])
+        image_id, image_link = wordpress.upload_a_media_file(
+            image_path=image_urls[index]
+        )
         sleep(3)
-        response = wordpress.upload_a_post(title=news[0],
-                                           content=text,
-                                           excerpt=exc,
-                                           status='draft',
-                                           date=publish_time,
-                                           featured_media=int(image_id))
+        response = wordpress.upload_a_post(
+            title=news[0],
+            content=text,
+            excerpt=exc,
+            status="draft",
+            date=publish_time,
+            featured_media=int(image_id),
+        )
         # print(response)
         minutes = int(minutes) - 10
         if minutes == 0:
@@ -221,10 +237,10 @@ def upload_news_to_wechat(upload_news_list, number_of_news_to_upload):
         return wc
 
 
-if __name__ == '__main__':
-    test_urls =[
-    "https://www.aa.com.tr/en/turkiye/chinas-embassy-in-turkiye-commemorates-96th-army-day/2958738",
-               ]
+if __name__ == "__main__":
+    test_urls = [
+        "https://www.aa.com.tr/en/turkiye/chinas-embassy-in-turkiye-commemorates-96th-army-day/2958738",
+    ]
 
     test_links = """
     "https://www.reuters.com/world/turkey-says-situation-ukraine-worsening-turkish-air-space-remain-open-2022-03-04/",
@@ -241,4 +257,10 @@ if __name__ == '__main__':
 
     UE = UploadingEngine()
     # prints file path
-    print(UE.do_daily_download_for_images(["https://www.aa.com.tr/en/turkiye/chinas-embassy-in-turkiye-commemorates-96th-army-day/2958738"]))
+    print(
+        UE.do_daily_download_for_images(
+            [
+                "https://www.aa.com.tr/en/turkiye/chinas-embassy-in-turkiye-commemorates-96th-army-day/2958738"
+            ]
+        )
+    )

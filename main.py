@@ -18,16 +18,29 @@ After making the exe file, one other file should be put into same directory:
 
 """
 import os
+import winreg
 import PySimpleGUI as sg
 from translating_engine import htm_to_urllist, translate_news
 from newsapi_controller import selected_news_listing, get_all_news_about_turkey
-from uploading_engine import UploadingEngine, \
-    get_news_from_trello, \
-    sunday_collect_and_upload, \
-    upload_news_to_wordpress, \
-    upload_news_to_wechat
+from uploading_engine import (
+    UploadingEngine,
+    get_news_from_trello,
+    sunday_collect_and_upload,
+    upload_news_to_wordpress,
+    upload_news_to_wechat,
+)
 
-DOC_PATH = os.path.expanduser("~\Downloads\exported-bookmarks.html")
+reg_key = winreg.OpenKey(
+    winreg.HKEY_CURRENT_USER,
+    r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
+)
+downloads_path = winreg.QueryValueEx(reg_key, "{374DE290-123F-4565-9164-39C4925E467B}")[
+    0
+]
+winreg.CloseKey(reg_key)
+
+DOC_PATH = downloads_path + "\exported-bookmarks.html"
+
 WIDTH = 1024
 HEIGHT = 768
 PADDING = 20
@@ -36,9 +49,7 @@ PADDING = 20
 class EtcTranslatorForAll:
     def __init__(self):
         # Translation variables
-        self.url_title_list, self.url_list = htm_to_urllist(
-            DOC_PATH
-        )
+        self.url_title_list, self.url_list = htm_to_urllist(DOC_PATH)
         self.translation_engine = "sogou"
         self.gdapi = self.trs = self.trel = self.upen = None
 
@@ -98,7 +109,10 @@ class EtcTranslatorForAll:
             ],
         ]
 
-        empty_list = [["This is a placeholder for a title of a news.", "This is their Source"], ["", ""]]
+        empty_list = [
+            ["This is a placeholder for a title of a news.", "This is their Source"],
+            ["", ""],
+        ]
         self.news_selection_layout = [
             *title_maker("Translator"),
             [sg.Text("News list for selection")],
@@ -184,8 +198,12 @@ class EtcTranslatorForAll:
             [sg.Text("Select upload Medium:")],
             [sg.Checkbox("WordPress", default=True, key="-WORDPRESS UPLOAD-")],
             [sg.Checkbox("Wechat", default=True, key="-WECHAT UPLOAD-")],
-            [sg.Text("Selecting only WordPress will get the news from '在上传 - 只WP' list, any other selection will get "
-                     "the news from '在上传'.")],
+            [
+                sg.Text(
+                    "Selecting only WordPress will get the news from '在上传 - 只WP' list, any other selection will get "
+                    "the news from '在上传'."
+                )
+            ],
             [sg.Button("Show Upload Content", key="-UPLOAD REFRESH-")],
             [sg.Text("News Titles to upload:")],
             [
@@ -196,19 +214,22 @@ class EtcTranslatorForAll:
                     auto_refresh=True,
                 )
             ],
-
             [sg.Button("Start Uploading", key="-UPLOAD BUTTON-")],
         ]
 
         # Main working window layout
-        SIDEBAR_WIDTH = int(WIDTH/4-PADDING)
-        REST_WIDTH = int((WIDTH/4)*3-PADDING)
-        REAL_HEIGHT = int(HEIGHT-3*PADDING)
+        SIDEBAR_WIDTH = int(WIDTH / 4 - PADDING)
+        REST_WIDTH = int((WIDTH / 4) * 3 - PADDING)
+        REAL_HEIGHT = int(HEIGHT - 3 * PADDING)
         self.working_window_layout = [
             [
                 sg.Column(layout=sidebar_maker(), size=(SIDEBAR_WIDTH, REAL_HEIGHT)),
                 sg.VSeparator(),
-                sg.Column(layout=self.welcome_layout, size=(REST_WIDTH, REAL_HEIGHT), key="-WELCOME-"),
+                sg.Column(
+                    layout=self.welcome_layout,
+                    size=(REST_WIDTH, REAL_HEIGHT),
+                    key="-WELCOME-",
+                ),
                 sg.Column(
                     layout=self.news_selection_layout,
                     size=(REST_WIDTH, REAL_HEIGHT),
@@ -265,7 +286,10 @@ class EtcTranslatorForAll:
                 try:
                     # Format of the list daily_news_selection_list:
                     # 0: dict{id, source_name} 1:Author, 2:title, 3: desc, 4:url, 5:img_url, 6:date, 7:excerpt
-                    self.daily_news_selection_list, self.table_data = get_all_news_about_turkey()
+                    (
+                        self.daily_news_selection_list,
+                        self.table_data,
+                    ) = get_all_news_about_turkey()
                     self.window["-NEWS SELECTION TABLE-"].update(values=self.table_data)
 
                 except Exception as error:
@@ -273,21 +297,21 @@ class EtcTranslatorForAll:
                         f"{error}\nThere was a problem with the NewsAPI, check your credentials"
                     )
                     self.table_data = list()
-                self.window["-PROG-"].update(current_count=0, max=len(self.url_title_list))
+                self.window["-PROG-"].update(
+                    current_count=0, max=len(self.url_title_list)
+                )
                 self.change_layout("-NEWS SELECTION-")
 
             if event == "-SELECTION COMPLETE-":
                 news_selected = values["-NEWS SELECTION TABLE-"]
-                self.url_list, self.url_title_list = selected_news_listing(news_selected,
-                                                                           self.table_data,
-                                                                           self.daily_news_selection_list)
+                self.url_list, self.url_title_list = selected_news_listing(
+                    news_selected, self.table_data, self.daily_news_selection_list
+                )
                 selected_from_news_api = True
 
             if event == "-TRANSLATOR SBB-":
                 if not selected_from_news_api:
-                    self.url_title_list, self.url_list = htm_to_urllist(
-                        DOC_PATH
-                    )
+                    self.url_title_list, self.url_list = htm_to_urllist(DOC_PATH)
                 self.window["-NEWS LIST-"].Update(values=self.url_title_list)
                 self.change_layout("-TRANSLATOR BEFORE-")
 
@@ -326,7 +350,9 @@ class EtcTranslatorForAll:
                 self.upload_news_list = list()
                 self.window["-UPLOAD INFO-"].update("")
                 self.upen = UploadingEngine()
-                if not values.get("-WECHAT UPLOAD-") and not values.get("-WORDPRESS UPLOAD-"):
+                if not values.get("-WECHAT UPLOAD-") and not values.get(
+                    "-WORDPRESS UPLOAD-"
+                ):
                     sg.popup("Please select an option to continue!")
                     continue
                 else:  # TODO The case where both options not been chosen should be added here
@@ -341,14 +367,20 @@ class EtcTranslatorForAll:
             if event == "-UPLOAD BUTTON-":
                 # self.change_layout("-UPLOAD DURING-")
                 if self.number_of_news_to_upload == 0:
-                    sg.popup("Please click 'Show Upload Content' button first, in order to start Uploading!")
+                    sg.popup(
+                        "Please click 'Show Upload Content' button first, in order to start Uploading!"
+                    )
                     continue
-                image_paths = self.upen.do_daily_download_for_images(self.news_source_urls_to_upload)
+                image_paths = self.upen.do_daily_download_for_images(
+                    self.news_source_urls_to_upload
+                )
                 if values.get("-WORDPRESS UPLOAD-"):
                     try:
-                        upload_news_to_wordpress(image_paths,
-                                                 self.number_of_news_to_upload,
-                                                 self.upload_news_list,)
+                        upload_news_to_wordpress(
+                            image_paths,
+                            self.number_of_news_to_upload,
+                            self.upload_news_list,
+                        )
                         sg.popup("Everything is uploaded to Wordpress!")
                     except Exception as error:
                         print(error)
@@ -358,7 +390,9 @@ class EtcTranslatorForAll:
                     # I needed to send wechat controller back because popup should stop you from closing the page,
                     # sometimes wechat doesn't upload properly, and you need to see it change something before closing,
                     # everything down.
-                    wc = upload_news_to_wechat(self.upload_news_list, self.number_of_news_to_upload)
+                    wc = upload_news_to_wechat(
+                        self.upload_news_list, self.number_of_news_to_upload
+                    )
                     sg.popup("Everything is uploaded to Wechat!")
                     wc.close_browser()
 
