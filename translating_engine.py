@@ -10,10 +10,14 @@ import subprocess
 from webdriver_manager.chrome import ChromeDriverManager
 from news import News
 import logging
-from fake_useragent import UserAgent
+# from fake_useragent import UserAgent
 from news_outlets_xpaths import headers, bodies, outlet_chinese_names
 from bs4 import BeautifulSoup
-from trello_controller import create_card_with_trello, TrelloController, upload_daily_news_to_trello
+from trello_controller import (
+    create_card_with_trello,
+    TrelloController,
+    upload_daily_news_to_trello,
+)
 from gdapi_controller import GoogleDriveAPIController as GDAPI
 
 logging.basicConfig(level=logging.DEBUG)
@@ -23,8 +27,9 @@ class Translator:
     news_uploaded = list()
 
     def __init__(self, tengine="sogou"):
-        ua = UserAgent()
-        userAgent = ua.random
+        # ua = UserAgent()
+        # userAgent = ua.random
+        userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         self.driver = self.open_browser(userAgent)
         self.preferred_translation_engine = tengine
         self.translator = self.open_browser(userAgent)
@@ -284,9 +289,11 @@ class Translator:
         text = text.replace("(", "（")
         text = text.replace(")", "）")
         text = text.replace(":", "：")
-        text = text.replace('"', '”')
+        text = text.replace('"', "”")
         text = text.replace("'", "’")
-        text = re.sub(r"/(?<!\d)[.]/g", "。", text) # This line checks if there is a digit before the dot, then changes it.
+        text = re.sub(
+            r"/(?<!\d)[.]/g", "。", text
+        )  # This line checks if there is a digit before the dot, then changes it.
         text = text.replace(",", "，")
         return text
 
@@ -319,7 +326,14 @@ class Translator:
         else:
             outlet_to_add = "UNKNOWN NEWS OUTLET"
         yesterday = date.today() - timedelta(days=1)
-        text_to_add = "\n据" + outlet_to_add + str(yesterday.month) + "月" + str(yesterday.day) + "日消息，"
+        text_to_add = (
+            "\n据"
+            + outlet_to_add
+            + str(yesterday.month)
+            + "月"
+            + str(yesterday.day)
+            + "日消息，"
+        )
         self.current_news.body_chinese = text_to_add + self.current_news.body_chinese
 
     def translate(self):
@@ -397,6 +411,7 @@ class Translator:
                 webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             except sce.NoSuchElementException as error:
                 print(error)
+
     def fix_turkish_characters(self):
         text = self.current_news.full_text_english
         text = text.replace("İ", "I")
@@ -421,10 +436,12 @@ class Translator:
             sleep(1)
             i += 1
             print("Checking page readiness")
-            if i == 15:
+            if i == 150:
                 self.driver.execute_script("window.stop();")
                 break
-        self.current_news.news_outlet = self.find_news_outlet(self.current_news.source_link)
+        self.current_news.news_outlet = self.find_news_outlet(
+            self.current_news.source_link
+        )
         self.popup_check()
         self.parse_link()
         self.fix_turkish_characters()
@@ -486,9 +503,7 @@ def translate_news(t_engine, url_list, printing_func, window):
             start_time = time()
             printing_func(f"Translation begins for {link}")
             trs.translate_main(link)
-            printing_func(
-                f"Translation ends, it took {time() - start_time} seconds.\n"
-            )
+            printing_func(f"Translation ends, it took {time() - start_time} seconds.\n")
 
             # Creating Trello card template for later use
             trello_daily_card.append(
@@ -521,14 +536,17 @@ def translate_news(t_engine, url_list, printing_func, window):
 
     finally:
         upload_daily_news_to_trello(
-            trello_daily_card, trs.current_news.translation_date, printing_func, trello_instance
+            trello_daily_card,
+            trs.current_news.translation_date,
+            printing_func,
+            trello_instance,
         )
         trs.close_driver()
 
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://apnews.com/article/turkey-ukraine-nato-membership-a28b98c2491de751285786622d61a934"
+    url = "https://www.reuters.com/business/energy/turkey-talks-with-exxonmobil-over-multibillion-dollar-lng-deal-ft-reports-2024-04-28/"
 
     try:
         trans.translate_main(url)
