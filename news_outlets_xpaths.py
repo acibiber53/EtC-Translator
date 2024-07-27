@@ -1,6 +1,4 @@
-base_urls = {
-    "ahvalnews": "https://ahvalnews.com/"
-}
+base_urls = {"ahvalnews": "https://ahvalnews.com/"}
 
 image_paths = {
     "reuters": "//img[1]/@src",

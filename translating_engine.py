@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 import selenium.common.exceptions as sce
 from time import sleep, time
 from datetime import date, timedelta
@@ -7,9 +8,11 @@ import re
 from docx import Document
 import os
 import subprocess
-from webdriver_manager.chrome import ChromeDriverManager
+
+# from webdriver_manager.chrome import ChromeDriverManager
 from news import News
 import logging
+
 # from fake_useragent import UserAgent
 from news_outlets_xpaths import headers, bodies, outlet_chinese_names
 from bs4 import BeautifulSoup
@@ -44,23 +47,23 @@ class Translator:
     def translator_settings(self):
         if self.preferred_translation_engine == "sogou":
             self.translator.get("https://fanyi.sogou.com/")
-            self.stoutput = self.translator.find_element_by_class_name("output")
-            self.stinput = self.translator.find_element_by_id("trans-input")
+            self.stoutput = self.translator.find_element(By.CLASS_NAME, "output")
+            self.stinput = self.translator.find_element(By.ID, "trans-input")
         elif self.preferred_translation_engine == "baidu":
             self.translator.get("https://fanyi.baidu.com/#en/zh/")
             try:
-                popup_element = self.translator.find_element_by_class_name(
-                    "desktop-guide-close"
+                popup_element = self.translator.find_element(
+                    By.CLASS_NAME, "desktop-guide-close"
                 )
                 popup_element.click()
             except:
                 print("NO popups I guess")
             try:
-                self.stinput = self.translator.find_element_by_id(
-                    "baidu_translate_input"
+                self.stinput = self.translator.find_element(
+                    By.ID, "baidu_translate_input"
                 )
-                self.stoutput = self.translator.find_element_by_class_name(
-                    "trans-right"
+                self.stoutput = self.translator.find_element(
+                    By.CLASS_NAME, "trans-right"
                 )
             except sce.NoSuchElementException as e:
                 print(
@@ -118,7 +121,7 @@ class Translator:
         # Also, for every other library we are using old versions, why were we using new ChromeDriver each time?
         # Possible Answer: Because of websites' user agent detection?
         try:
-            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+            driver = webdriver.Chrome(options=options)
         except sce.SessionNotCreatedException as error:
             print(error)
             os.system("pause")
@@ -151,28 +154,31 @@ class Translator:
     def parse_link(self):
         is_not_found = 0
         try:
-            header = self.driver.find_element_by_xpath(
-                headers.get(self.current_news.news_outlet, "//h1")
+            header = self.driver.find_element(
+                By.XPATH, headers.get(self.current_news.news_outlet, "//h1")
             ).text
         except sce.NoSuchElementException as error:
             print(
                 f"We got an error message when searching for header:\n{error}\nTo be able to continue our "
                 f"work, we are selecting the header from the most common xpath, //h1."
             )
-            header = self.driver.find_element_by_xpath("//h1").text
+            header = self.driver.find_element(By.XPATH, "//h1").text
             is_not_found = 1
+        print(header)
 
         try:
-            body = self.driver.find_elements_by_xpath(
-                bodies.get(self.current_news.news_outlet, "//p")
+            body = self.driver.find_elements(
+                By.XPATH, bodies.get(self.current_news.news_outlet, "//p")
             )
         except sce.NoSuchElementException as error:
             print(
                 f"We got an error message when searching for body:\n{error}\nTo be able to continue our "
                 f"work, we are selecting the body from the most common xpath, //p."
             )
-            body = self.driver.find_elements_by_xpath("//p")
+            body = self.driver.find_elements(By.XPATH, "//p")
             is_not_found = 1
+        print("This is where we print body.")
+        print(body)
 
         if is_not_found:
             print("We stopped because we couldn't find header or body!")
@@ -220,8 +226,8 @@ class Translator:
                 output = self.stoutput.text
 
             # Cleaning the text area for next translation
-            clean_button = self.translator.find_element_by_xpath(
-                "//div[@class='trans-con']/span"
+            clean_button = self.translator.find_element(
+                By.XPATH, "//div[@class='trans-con']/span"
             )
             clean_button.click()
 
@@ -267,8 +273,8 @@ class Translator:
                 output = tmp_res
 
             # Cleaning the text area for next translation
-            clean_button = self.translator.find_element_by_class_name(
-                "textarea-clear-btn"
+            clean_button = self.translator.find_element(
+                By.CLASS_NAME, "textarea-clear-btn"
             )
             clean_button.click()
 
@@ -398,8 +404,8 @@ class Translator:
     def popup_check(self):
         if self.current_news.news_outlet == "apnews":
             try:
-                pop_close = self.driver.find_element_by_xpath(
-                    "//button[@class='sailthru-overlay-close']"
+                pop_close = self.driver.find_element(
+                    By.XPATH, "//button[@class='sailthru-overlay-close']"
                 )
                 pop_close.click()
             except sce.NoSuchElementException as error:
@@ -407,10 +413,20 @@ class Translator:
                 print("It is not asking for email so we just skip that part")
         elif self.current_news.news_outlet == "ahvalnews":
             try:
-                pop_close = self.driver.find_element_by_xpath("//a[@class='close']")
+                pop_close = self.driver.find_element(By.XPATH, "//a[@class='close']")
                 webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             except sce.NoSuchElementException as error:
                 print(error)
+        elif self.current_news.news_outlet == "turkishminute":
+            try:
+                pop_close = self.driver.find_element(
+                    By.LINK_TEXT, "Continue without consent"
+                )
+                pop_close.click()
+            except sce.NoSuchElementException as error:
+                print(error)
+                print("Couldn't find any popups")
+        sleep(2)
 
     def fix_turkish_characters(self):
         text = self.current_news.full_text_english
@@ -436,12 +452,13 @@ class Translator:
             sleep(1)
             i += 1
             print("Checking page readiness")
-            if i == 150:
+            if i == 15:
                 self.driver.execute_script("window.stop();")
                 break
         self.current_news.news_outlet = self.find_news_outlet(
             self.current_news.source_link
         )
+        sleep(3)
         self.popup_check()
         self.parse_link()
         self.fix_turkish_characters()
@@ -546,7 +563,7 @@ def translate_news(t_engine, url_list, printing_func, window):
 
 if __name__ == "__main__":
     trans = Translator("sogou")
-    url = "https://www.reuters.com/business/energy/turkey-talks-with-exxonmobil-over-multibillion-dollar-lng-deal-ft-reports-2024-04-28/"
+    url = "https://www.turkishminute.com/2024/06/29/pope-hoping-to-visit-turkey-for-anniversary-council-of-nicea-in-2025/"
 
     try:
         trans.translate_main(url)
